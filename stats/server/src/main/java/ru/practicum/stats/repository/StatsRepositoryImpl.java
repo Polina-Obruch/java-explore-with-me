@@ -8,7 +8,7 @@ import com.querydsl.jpa.JPQLTemplates;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import ru.practicum.stats.dto.ViewStats;
+import ru.practicum.stats.dto.ViewStatsDto;
 import ru.practicum.stats.mapper.ViewStatsMapper;
 import ru.practicum.stats.model.QEndpointHit;
 
@@ -26,7 +26,7 @@ public class StatsRepositoryImpl implements StatsRepositoryCustom {
     //Используем Querydsl для удобства, так как параметров запроса статистики много
     // и они являются динамичными/необязательными
     @Override
-    public List<ViewStats> getStatistics(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+    public List<ViewStatsDto> getStatistics(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         QEndpointHit qEndpointHit = QEndpointHit.endpointHit;
         JPAQueryFactory queryFactory = new JPAQueryFactory(JPQLTemplates.DEFAULT, entityManager);
 
@@ -51,6 +51,6 @@ public class StatsRepositoryImpl implements StatsRepositoryCustom {
                 .fetch();
 
 
-        return result.stream().map(viewStatsMapper::tupleToViewStats).collect(Collectors.toList());
+        return result.stream().map(viewStatsMapper::tupleToViewStatsDto).collect(Collectors.toList());
     }
 }

@@ -6,8 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.CreateEndpointHitDto;
 import ru.practicum.stats.dto.EndpointHitDto;
-import ru.practicum.stats.dto.ViewStats;
-import ru.practicum.stats.mapper.EndpointHitMapper;
+import ru.practicum.stats.dto.ViewStatsDto;
 import ru.practicum.stats.service.StatsService;
 
 import javax.validation.Valid;
@@ -19,22 +18,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatsController {
     private final StatsService statsService;
-    private final EndpointHitMapper endpointHitMapper;
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
     public EndpointHitDto saveEndpointHit(@Valid @RequestBody CreateEndpointHitDto createEndpointHitDto) {
         log.info("Запрос на сохранение информации обращения к эндпойнту");
-        return endpointHitMapper.endpointHitToEndpointHitDto(
-                statsService.addEndpointHit(
-                        endpointHitMapper.createEndpointHitDtoToEndpointHit(createEndpointHitDto)));
+        return statsService.addEndpointHit(createEndpointHitDto);
     }
 
     @GetMapping("/stats")
-    public List<ViewStats> getStatistics(@RequestParam LocalDateTime start,
-                                         @RequestParam LocalDateTime end,
-                                         @RequestParam(required = false) List<String> uris,
-                                         @RequestParam(defaultValue = "false") boolean unique) {
+    public List<ViewStatsDto> getStatistics(@RequestParam LocalDateTime start,
+                                            @RequestParam LocalDateTime end,
+                                            @RequestParam(required = false) List<String> uris,
+                                            @RequestParam(defaultValue = "false") boolean unique) {
         log.info("Запрос на выдачу статистики по списку uris");
         return statsService.getStatistics(start, end, uris, unique);
     }

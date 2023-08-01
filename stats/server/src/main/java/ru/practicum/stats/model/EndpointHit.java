@@ -22,13 +22,13 @@ public class EndpointHit {
     private Long id;
 
     //Автоматическая генерация базы данных, используем nullable для ограничения к конкретному столбцу
-    @Column(nullable = false)
+    @Column(nullable = false, length = 64)
     private String app;
 
     @Column(nullable = false)
     private String uri;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 15)
     private String ip;
 
     @Column(nullable = false)
