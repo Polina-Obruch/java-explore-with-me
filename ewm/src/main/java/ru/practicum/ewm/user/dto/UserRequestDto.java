@@ -16,11 +16,11 @@ import javax.validation.constraints.Size;
 public class UserRequestDto {
 
     @NotBlank(message = "Имя пользователя не может быть пустым")
-    @Size(max = 50)
+    @Size(min = 2, max = 250)
     private String name;
 
     @Email(message = "Введите правильный email")
     @NotBlank(message = "Email не может быть пустым")
-    @Size(max = 50)
+    @Size(min = 6, max = 254)
     private String email;
 }
