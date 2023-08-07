@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.ewm.core.exception.EntityNotFoundException;
+import ru.practicum.ewm.core.exception.ForbiddenException;
+import ru.practicum.ewm.core.exception.ValidationException;
 import ru.practicum.ewm.core.exception.model.ApiError;
 import ru.practicum.ewm.core.exception.model.ValidationErrorResponse;
 
@@ -40,6 +42,30 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.NOT_FOUND,
                 "The required object was not found.",
+                exp.getMessage(),
+                List.of(exp),
+                LocalDateTime.now());
+    }
+
+    @ExceptionHandler(value = {ValidationException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleValidation(final RuntimeException exp) {
+        log.error(exp.getMessage());
+        return new ApiError(
+                HttpStatus.BAD_REQUEST,
+                "Incorrectly made request.",
+                exp.getMessage(),
+                List.of(exp),
+                LocalDateTime.now());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiError handleValidation(final ForbiddenException exp) {
+        log.error(exp.getMessage());
+        return new ApiError(
+                HttpStatus.FORBIDDEN,
+                "For the requested operation the conditions are not met.",
                 exp.getMessage(),
                 List.of(exp),
                 LocalDateTime.now());

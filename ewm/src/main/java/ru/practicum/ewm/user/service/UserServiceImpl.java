@@ -35,6 +35,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId).orElseThrow(()
+                -> new EntityNotFoundException("User", userId));
+    }
+
+    @Override
     public List<User> getUsersByIds(List<Long> userIds, Pageable page) {
         log.info("Выдача пользователей по списку userIds");
         List<User> users;

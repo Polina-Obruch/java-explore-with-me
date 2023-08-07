@@ -11,5 +11,7 @@ public interface UserService {
 
     void remove(Long userId);
 
+    User getUserById(Long userId);
+
     List<User> getUsersByIds(List<Long> userIds, Pageable page);
 }
