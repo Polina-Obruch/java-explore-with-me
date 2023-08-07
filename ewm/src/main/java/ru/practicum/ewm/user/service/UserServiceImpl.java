@@ -18,6 +18,18 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
+    /*@Transactional
+    @Override
+    public User addUser(User user) {
+        log.info("Добавление пользователя");
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException exp) {
+            throw new ConflictException(String.format(
+                    "Пользователь с name = %s уже зарегистрирован", user.getName()));
+        }
+    }*/
+
     @Transactional
     @Override
     public User addUser(User user) {

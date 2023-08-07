@@ -2,6 +2,7 @@ package ru.practicum.ewm.core.exception.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -9,13 +10,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.ewm.core.exception.EntityNotFoundException;
-import ru.practicum.ewm.core.exception.ForbiddenException;
+import ru.practicum.ewm.core.exception.ConflictException;
 import ru.practicum.ewm.core.exception.ValidationException;
 import ru.practicum.ewm.core.exception.model.ApiError;
 import ru.practicum.ewm.core.exception.model.ValidationErrorResponse;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -43,7 +43,6 @@ public class ErrorHandler {
                 HttpStatus.NOT_FOUND,
                 "The required object was not found.",
                 exp.getMessage(),
-                List.of(exp),
                 LocalDateTime.now());
     }
 
@@ -55,20 +54,29 @@ public class ErrorHandler {
                 HttpStatus.BAD_REQUEST,
                 "Incorrectly made request.",
                 exp.getMessage(),
-                List.of(exp),
                 LocalDateTime.now());
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ApiError handleValidation(final ForbiddenException exp) {
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleValidation(final ConflictException exp) {
         log.error(exp.getMessage());
         return new ApiError(
-                HttpStatus.FORBIDDEN,
+                HttpStatus.CONFLICT,
                 "For the requested operation the conditions are not met.",
                 exp.getMessage(),
-                List.of(exp),
                 LocalDateTime.now());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleIntegrityException(DataAccessException exception) {
+        return new ApiError(
+                HttpStatus.CONFLICT,
+                "Integrity constraint has been violated.",
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
     }
 
     @ExceptionHandler
@@ -78,7 +86,7 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 exp.getClass().getName(),
-                exp.getMessage(), List.of(exp),
+                exp.getMessage(),
                 LocalDateTime.now());
     }
 }

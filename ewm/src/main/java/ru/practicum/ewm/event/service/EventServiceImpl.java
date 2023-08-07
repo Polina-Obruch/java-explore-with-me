@@ -8,17 +8,19 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.service.CategoryService;
 import ru.practicum.ewm.core.exception.EntityNotFoundException;
-import ru.practicum.ewm.core.exception.ForbiddenException;
+import ru.practicum.ewm.core.exception.ConflictException;
 import ru.practicum.ewm.core.exception.ValidationException;
-import ru.practicum.ewm.event.dto.EventUpdateUserRequestDto;
-import ru.practicum.ewm.event.dto.LocationDto;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.model.*;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
+import ru.practicum.ewm.request.model.Request;
+import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -27,16 +29,17 @@ import java.util.Objects;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class EventServicePrivateImpl implements EventServicePrivate {
+public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final LocationRepository locationRepository;
+    private final RequestRepository requestRepository;
     private final UserService userService;
     private final CategoryService categoryService;
     private final LocationMapper locationMapper;
 
     @Transactional
     @Override
-    public Event addEvent(Long userId, Event event) {
+    public Event addEventPrivate(Long userId, Event event) {
         log.info("Добавление события");
         User user = userService.getUserById(userId);
         Category category = categoryService.getCategoryById(event.getCategory().getId());
@@ -52,7 +55,7 @@ public class EventServicePrivateImpl implements EventServicePrivate {
     }
 
     @Override
-    public Event getEventById(Long userId, Long eventId) {
+    public Event getEventByIdPrivate(Long userId, Long eventId) {
         log.info(String.format("Выдача события c id = %d", eventId));
         userService.getUserById(userId);
         Event event = eventRepository.findById(eventId)
@@ -68,7 +71,7 @@ public class EventServicePrivateImpl implements EventServicePrivate {
 
     @Transactional
     @Override
-    public Event updateEvent(Long userId, Long eventId, EventUpdateUserRequestDto eventUpdate) {
+    public Event updateEventPrivate(Long userId, Long eventId, EventUpdateUserRequestDto eventUpdate) {
         log.info(String.format("Обновление события c id = %d", eventId));
         userService.getUserById(userId);
         Event event = eventRepository.findById(eventId)
@@ -79,7 +82,7 @@ public class EventServicePrivateImpl implements EventServicePrivate {
         }
 
         if (event.getState().equals(State.PUBLISHED)) {
-            throw new ForbiddenException("Only pending or canceled events can be changed");
+            throw new ConflictException("Only pending or canceled events can be changed");
         }
 
         LocalDateTime updateTime = eventUpdate.getEventDate();
@@ -140,10 +143,48 @@ public class EventServicePrivateImpl implements EventServicePrivate {
     }
 
     @Override
-    public List<Event> getAllEvents(Long userId, Pageable page) {
+    public List<Event> getAllEventsPrivate(Long userId, Pageable page) {
         //нужна ли проверка на существования пользователя
         // тут добавляем статистику просмотров
         return eventRepository.findAllByInitiatorId(userId, page);
+    }
+
+    @Override
+    public List<Request> getAllRequestByEventIdPrivate(Long userId, Long eventId) {
+        userService.getUserById(userId);
+        eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        return requestRepository.findAllByEventIdAndEventInitiatorId(eventId, userId);
+    }
+
+    @Transactional
+    @Override
+    public AnswerStatusUpdateDto updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdateDto statusUpdateDto) {
+        return null;
+    }
+
+    @Transactional
+    @Override
+    public Event moderateEventAdmin(Long eventId, EventUpdateAdminRequestDto eventUpdate) {
+        return null;
+    }
+
+    @Override
+    public List<Event> getAllEventsAdmin(List<Long> userIds, List<State> states, List<Long> categoryIds,
+                                         LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+        return null;
+    }
+
+    @Override
+    public List<Event> getEventsPublic(String text, List<Long> categoryIds, Boolean paid, LocalDateTime rangeStart,
+                                       LocalDateTime rangeEnd, boolean onlyAvailable, EventSort sort, int from,
+                                       int size, HttpServletRequest request) {
+        return null;
+    }
+
+    @Override
+    public Event getEventByIdPublic(Long eventId, HttpServletRequest request) {
+        return null;
     }
 
     private void checkTimeValidation(LocalDateTime eventDate) {
