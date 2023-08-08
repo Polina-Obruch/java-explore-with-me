@@ -6,6 +6,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -42,6 +43,17 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.NOT_FOUND,
                 "The required object was not found.",
+                exp.getMessage(),
+                LocalDateTime.now());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleRequiredRequestParameter(final MissingServletRequestParameterException exp) {
+        log.error(exp.getMessage());
+        return new ApiError(
+                HttpStatus.BAD_REQUEST,
+                "Incorrectly made request.",
                 exp.getMessage(),
                 LocalDateTime.now());
     }

@@ -28,7 +28,6 @@ public class Request {
     @JoinColumn(name = "REQUESTER_ID")
     private User requester;
 
-    @JoinColumn(name = "CREATED_ON")
     private LocalDateTime created;
 
     @Enumerated(EnumType.STRING)

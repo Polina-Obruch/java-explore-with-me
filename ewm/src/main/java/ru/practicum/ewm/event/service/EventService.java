@@ -8,7 +8,7 @@ import ru.practicum.ewm.event.dto.RequestStatusUpdateDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventSort;
 import ru.practicum.ewm.event.model.State;
-import ru.practicum.ewm.request.model.Request;
+import ru.practicum.ewm.request.dto.RequestDto;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -25,18 +25,18 @@ public interface EventService {
 
     List<Event> getAllEventsPrivate(Long userId, Pageable page);
 
-    List<Request> getAllRequestByEventIdPrivate(Long userId, Long eventId);
+    List<RequestDto> getAllRequestByEventIdPrivate(Long userId, Long eventId);
 
     AnswerStatusUpdateDto updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdateDto statusUpdateDto);
 
-    Event moderateEventAdmin(Long eventId, EventUpdateAdminRequestDto eventUpdate);
+    Event updateEventAdmin(Long eventId, EventUpdateAdminRequestDto eventUpdate);
 
     List<Event> getAllEventsAdmin(List<Long> userIds, List<State> states, List<Long> categoryIds,
                                   LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size);
 
-    List<Event> getEventsPublic( String text, List<Long> categoryIds, Boolean paid, LocalDateTime rangeStart,
-                                 LocalDateTime rangeEnd, boolean onlyAvailable, EventSort sort, int from,
-                                 int size, HttpServletRequest request);
+    List<Event> getAllEventsPublic(String text, List<Long> categoryIds, Boolean paid, LocalDateTime rangeStart,
+                                   LocalDateTime rangeEnd, boolean onlyAvailable, EventSort sort, int from,
+                                   int size, HttpServletRequest request);
 
     Event getEventByIdPublic(Long eventId, HttpServletRequest request);
 }

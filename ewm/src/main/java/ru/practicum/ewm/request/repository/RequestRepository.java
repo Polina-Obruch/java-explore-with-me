@@ -24,4 +24,10 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     @Query("SELECT req FROM Request req " +
             "WHERE req.event.id IN :eventId AND req.status = 'CONFIRMED'")
     List<Request> findAllConfirmedRequestsByEventIdIn(List<Long> eventId);
+
+    @Query("SELECT req FROM Request req " +
+            "WHERE req.id in :requestIds AND req.event.id = :eventId AND req.event.initiator.id = :initiatorId " +
+            "ORDER BY req.created ASC")
+    List<Request> getRequestsForUpdating(@Param("eventId") Long eventId, @Param("initiatorId") Long initiatorId,
+                                         @Param("requestIds") List<Long> requestIds);
 }

@@ -9,6 +9,7 @@ import ru.practicum.ewm.core.mapper.PaginationMapper;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.request.dto.RequestDto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
@@ -57,5 +58,10 @@ public class EventControllerPrivate {
     public AnswerStatusUpdateDto updateEventRequests(@PathVariable Long userId, @PathVariable Long eventId,
                                                      @Valid @RequestBody RequestStatusUpdateDto updateRequestDto) {
         return eventService.updateStatusEventRequestPrivate(userId, eventId, updateRequestDto);
+    }
+
+    @GetMapping("/{eventId}/requests")
+    public List<RequestDto> getEventRequests(@PathVariable Long userId, @PathVariable Long eventId) {
+        return eventService.getAllRequestByEventIdPrivate(userId, eventId);
     }
 }
