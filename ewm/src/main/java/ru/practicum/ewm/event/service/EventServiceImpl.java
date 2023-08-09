@@ -1,5 +1,7 @@
 package ru.practicum.ewm.event.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -22,14 +24,14 @@ import ru.practicum.ewm.request.model.RequestStatus;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.service.UserService;
-//import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.CreateEndpointHitDto;
+import ru.practicum.stats.dto.ViewStatsDto;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,10 +46,8 @@ public class EventServiceImpl implements EventService {
     private final CategoryService categoryService;
     private final LocationMapper locationMapper;
     private final RequestMapper requestMapper;
-
-//    @Value("${ewm-app}")
-//    private final String appName;
-//    private final StatsClient statsClient;
+    private static final String APP_NAME = "ewm";
+    private final StatsClient statsClient;
 
     @Transactional
     @Override
@@ -77,7 +77,7 @@ public class EventServiceImpl implements EventService {
             throw new EntityNotFoundException("Event", eventId);
         }
         // тут добавляем статистику просмотров
-
+        this.setViewsAndConfirmedRequest(List.of(event));
         return event;
     }
 
@@ -94,7 +94,7 @@ public class EventServiceImpl implements EventService {
         }
 
         // Обновление всех возможных полей
-        event = this.updateEvent(event, eventUpdate);
+        this.updateEvent(event, eventUpdate);
 
         LocalDateTime updateTime = eventUpdate.getEventDate();
         if (updateTime != null) {
@@ -117,7 +117,7 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        //добавка статистики
+        this.setViewsAndConfirmedRequest(List.of(event));
 
         return event;
     }
@@ -127,7 +127,9 @@ public class EventServiceImpl implements EventService {
         log.info(String.format("Выдача событий владельца c id = %d - private", userId));
         //нужна ли проверка на существования пользователя
         // тут добавляем статистику просмотров
-        return eventRepository.findAllByInitiatorId(userId, page);
+        List<Event> events = eventRepository.findAllByInitiatorId(userId, page);
+        this.setViewsAndConfirmedRequest(events);
+        return events;
     }
 
     @Override
@@ -198,7 +200,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
 
         //Обновление всех возможных полей
-        event = this.updateEvent(event, eventUpdate);
+        this.updateEvent(event, eventUpdate);
 
         LocalDateTime updateTime = eventUpdate.getEventDate();
         if (updateTime != null) {
@@ -226,6 +228,7 @@ public class EventServiceImpl implements EventService {
         }
 
         //статистика
+        this.setViewsAndConfirmedRequest(List.of(event));
         return event;
     }
 
@@ -235,6 +238,7 @@ public class EventServiceImpl implements EventService {
         log.info("Выдача списка событий - admin");
         List<Event> events = eventRepository.findAllByAdminFilters(userIds, states, categoryIds, rangeStart, rangeEnd, from, size);
         // добавка статистики
+        this.setViewsAndConfirmedRequest(events);
         return events;
     }
 
@@ -243,7 +247,8 @@ public class EventServiceImpl implements EventService {
                                           LocalDateTime rangeEnd, boolean onlyAvailable, EventSort sort, int from,
                                           int size, HttpServletRequest request) {
         log.info("Выдача списка событий - public");
-        //отправка статистики
+        this.sendStatistic(request);
+
         if (rangeStart != null && rangeEnd != null) {
             if (rangeEnd.isBefore(rangeStart)) {
                 throw new ValidationException("Дата окончания события не может быть раньше начала");
@@ -253,6 +258,8 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findAllByPublicFilters(text, categoryIds, paid, rangeStart, rangeEnd, sort, from, size);
 
         // добавка статистики
+        this.setViewsAndConfirmedRequest(events);
+
         if (onlyAvailable) {
             events = events.stream()
                     .filter(event -> event.getParticipantLimit() <= event.getConfirmedRequests())
@@ -260,13 +267,16 @@ public class EventServiceImpl implements EventService {
         }
 
         // сортировка по просмотрам если надо
+        if (sort == EventSort.VIEWS) {
+            events.sort((event1, event2) -> Long.compare(event2.getViews(), event1.getViews()));
+        }
         return events;
     }
 
     @Override
     public Event getEventByIdPublic(Long eventId, HttpServletRequest request) {
         log.info(String.format("Выдача события c id = %d - public", eventId));
-        //отправка статистики
+        this.sendStatistic(request);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
 
@@ -274,11 +284,12 @@ public class EventServiceImpl implements EventService {
             throw new EntityNotFoundException("Event", eventId);
         }
         // добавка статистики
+        this.setViewsAndConfirmedRequest(List.of(event));
         return event;
     }
 
 
-    private Event updateEvent(Event event, EventUpdateDto eventUpdate) {
+    private void updateEvent(Event event, EventUpdateDto eventUpdate) {
         if (event.getState().equals(State.PUBLISHED)) {
             throw new ConflictException("Only pending or canceled events can be changed");
         }
@@ -319,8 +330,6 @@ public class EventServiceImpl implements EventService {
         if (eventUpdate.getRequestModeration() != null) {
             event.setRequestModeration(eventUpdate.getRequestModeration());
         }
-
-        return event;
     }
 
     private void checkTimeValidationPrivate(LocalDateTime eventDate) {
@@ -333,5 +342,47 @@ public class EventServiceImpl implements EventService {
         if (eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
             throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила.");
         }
+    }
+
+    private void sendStatistic(HttpServletRequest request) {
+        statsClient.addEndpointHit(new CreateEndpointHitDto(
+                APP_NAME,
+                request.getRequestURI(),
+                request.getRemoteAddr(),
+                LocalDateTime.now()
+        ));
+    }
+
+    private void setViewsAndConfirmedRequest(List<Event> events) {
+        log.info("Добавление подтвержденных заявок");
+        Map<Long, Long> countRequestMap = requestRepository.findAllConfirmedRequestsByEventIdIn(
+                        events.stream().map(Event::getId).collect(Collectors.toList()))
+                .stream().collect(Collectors.groupingBy(request ->
+                        request.getEvent().getId(), Collectors.counting()));
+
+        events.forEach(event -> event.setConfirmedRequests((
+                countRequestMap.getOrDefault(event.getId(), 0L))));
+
+        log.info("Добавление просмотров");
+        Map<String, Event> eventsMap = events.stream()
+                .collect(Collectors.toMap(event -> "/events/" + event.getId(), event -> event));
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        LocalDateTime minStart = LocalDateTime.now().minusYears(10);
+        LocalDateTime maxEnd = LocalDateTime.now().plusYears(10);
+
+        Object rawStatistics = statsClient.getStatistics(minStart.format(formatter),
+                maxEnd.format(formatter), new ArrayList<>(eventsMap.keySet()), true).getBody();
+
+        List<ViewStatsDto> viewStatsList = objectMapper.convertValue(rawStatistics, new TypeReference<>() {
+        });
+
+        viewStatsList.forEach(viewStatsDto -> {
+            if (eventsMap.containsKey(viewStatsDto.getUri())) {
+                eventsMap.get(viewStatsDto.getUri()).setViews(viewStatsDto.getHits());
+            }
+        });
     }
 }

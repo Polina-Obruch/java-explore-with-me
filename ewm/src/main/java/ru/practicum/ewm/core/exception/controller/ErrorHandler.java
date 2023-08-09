@@ -14,7 +14,6 @@ import ru.practicum.ewm.core.exception.EntityNotFoundException;
 import ru.practicum.ewm.core.exception.ConflictException;
 import ru.practicum.ewm.core.exception.ValidationException;
 import ru.practicum.ewm.core.exception.model.ApiError;
-import ru.practicum.ewm.core.exception.model.ApiErrorForValidation;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -27,17 +26,16 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorForValidation handleBindException(MethodArgumentNotValidException exp) {
+    public ApiError handleBindException(MethodArgumentNotValidException exp) {
         //Ошибок валидации может быть несколько - возвращаем информацию по всем полям
         Map<String, String> errors = exp.getBindingResult().getFieldErrors().stream().collect(
                 Collectors.toMap(FieldError::getField,
                         Objects.requireNonNull(DefaultMessageSourceResolvable::getDefaultMessage)));
         log.error(errors.toString());
-        return new ApiErrorForValidation(
+        return new ApiError(
                 HttpStatus.BAD_REQUEST,
                 "Incorrectly made request.",
-                exp.getMessage(),
-                errors,
+                errors.toString(),
                 LocalDateTime.now());
     }
 

@@ -23,7 +23,7 @@ public class Event {
     private String annotation;
 
     @ManyToOne
-    @JoinColumn( name = "CATEGORY_ID")
+    @JoinColumn(name = "CATEGORY_ID")
     private Category category;
 
     @Column(name = "CREATED_ON")
@@ -59,8 +59,8 @@ public class Event {
     private String title;
 
     @Transient
-    private Integer views;
+    private Long views;
 
     @Transient
-    private Integer confirmedRequests;
+    private Long confirmedRequests;
 }
