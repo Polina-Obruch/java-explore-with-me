@@ -52,7 +52,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public Event addEventPrivate(Long userId, Event event) {
-        log.info("Добавление события");
+        log.info("Добавление события - private");
         User user = userService.getUserById(userId);
         Category category = categoryService.getCategoryById(event.getCategory().getId());
 
@@ -68,7 +68,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Event getEventByIdPrivate(Long userId, Long eventId) {
-        log.info(String.format("Выдача события c id = %d", eventId));
+        log.info(String.format("Выдача события c id = %d - private", eventId));
         userService.getUserById(userId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
@@ -84,7 +84,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public Event updateEventPrivate(Long userId, Long eventId, EventUpdateUserRequestDto eventUpdate) {
-        log.info(String.format("Обновление события c id = %d", eventId));
+        log.info(String.format("Обновление события c id = %d - private", eventId));
         userService.getUserById(userId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
@@ -124,6 +124,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<Event> getAllEventsPrivate(Long userId, Pageable page) {
+        log.info(String.format("Выдача событий владельца c id = %d - private", userId));
         //нужна ли проверка на существования пользователя
         // тут добавляем статистику просмотров
         return eventRepository.findAllByInitiatorId(userId, page);
@@ -131,6 +132,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<RequestDto> getAllRequestByEventIdPrivate(Long userId, Long eventId) {
+        log.info(String.format("Выдача заявок на участие в мероприятии (eventId = %d) " +
+                "владельца c id = %d - private", eventId, userId));
         userService.getUserById(userId);
         eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
@@ -141,6 +144,8 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public AnswerStatusUpdateDto updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdateDto statusUpdateDto) {
+        log.info(String.format("Подтверждение/Отклонение заявок на участие в мероприятии (eventId = %d) " +
+                "владельца c id = %d - private", eventId, userId));
         userService.getUserById(userId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
@@ -173,7 +178,7 @@ public class EventServiceImpl implements EventService {
         List<RequestDto> rejectedRequests = new ArrayList<>();
 
         requests.forEach(request -> {
-            if (countConfirmedRequests < participantLimit) {
+            if (countConfirmedRequests <= participantLimit) {
                 request.setStatus(RequestStatus.CONFIRMED);
                 confirmedRequests.add(requestMapper.requestToRequestDto(request));
             } else {
@@ -188,6 +193,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public Event updateEventAdmin(Long eventId, EventUpdateAdminRequestDto eventUpdate) {
+        log.info(String.format("Обновление события c id = %d - admin", eventId));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
 
@@ -205,11 +211,11 @@ public class EventServiceImpl implements EventService {
         if (stateAction != null) {
             switch (stateAction) {
                 case PUBLISH_EVENT:
-                    //Нужно ли тут время публикации
                     if (event.getState() == State.CANCELED) {
                         throw new ConflictException("Cancelled events can not be published");
                     }
                     event.setState(State.PUBLISHED);
+                    event.setPublishedOn(LocalDateTime.now());
                     break;
                 case REJECT_EVENT:
                     event.setState(State.CANCELED);
@@ -226,6 +232,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> getAllEventsAdmin(List<Long> userIds, List<State> states, List<Long> categoryIds,
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+        log.info("Выдача списка событий - admin");
         List<Event> events = eventRepository.findAllByAdminFilters(userIds, states, categoryIds, rangeStart, rangeEnd, from, size);
         // добавка статистики
         return events;
@@ -235,6 +242,7 @@ public class EventServiceImpl implements EventService {
     public List<Event> getAllEventsPublic(String text, List<Long> categoryIds, Boolean paid, LocalDateTime rangeStart,
                                           LocalDateTime rangeEnd, boolean onlyAvailable, EventSort sort, int from,
                                           int size, HttpServletRequest request) {
+        log.info("Выдача списка событий - public");
         //отправка статистики
         if (rangeStart != null && rangeEnd != null) {
             if (rangeEnd.isBefore(rangeStart)) {
@@ -257,6 +265,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Event getEventByIdPublic(Long eventId, HttpServletRequest request) {
+        log.info(String.format("Выдача события c id = %d - public", eventId));
         //отправка статистики
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
@@ -274,7 +283,7 @@ public class EventServiceImpl implements EventService {
             throw new ConflictException("Only pending or canceled events can be changed");
         }
 
-        if (eventUpdate.getAnnotation() != null) {
+        if (eventUpdate.getAnnotation() != null && !eventUpdate.getAnnotation().isBlank()) {
             event.setAnnotation(eventUpdate.getAnnotation());
         }
 
@@ -284,11 +293,11 @@ public class EventServiceImpl implements EventService {
             event.setCategory(category);
         }
 
-        if (eventUpdate.getTitle() != null) {
+        if (eventUpdate.getTitle() != null && !eventUpdate.getTitle().isBlank()) {
             event.setTitle(eventUpdate.getTitle());
         }
 
-        if (eventUpdate.getDescription() != null) {
+        if (eventUpdate.getDescription() != null && !eventUpdate.getDescription().isBlank()) {
             event.setDescription(eventUpdate.getDescription());
         }
 

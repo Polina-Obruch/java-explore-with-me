@@ -6,10 +6,12 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import ru.practicum.ewm.event.model.Event;
 
 import java.util.List;
+import java.util.Set;
 
 public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPredicateExecutor<Event>, EventRepositoryCustom {
 
     List<Event> findAllByInitiatorId(Long userId, Pageable pageable);
-    //Set<Event> findAllByIdIn(List<Long> eventIds);
 
+    //Берем Set для уникальности подборки
+    Set<Event> findAllByIdIn(List<Long> eventIds);
 }
