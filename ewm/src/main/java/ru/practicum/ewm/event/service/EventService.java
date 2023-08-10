@@ -14,9 +14,14 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 
-//Действия для "владельца" события
+
 public interface EventService {
 
+    /**
+     * Private - методы предназначены для владельца события
+     *
+     * @param userId - должен совпадать с INITIATOR_ID в Event
+     */
     Event addEventPrivate(Long userId, Event event);
 
     Event getEventByIdPrivate(Long userId, Long eventId);

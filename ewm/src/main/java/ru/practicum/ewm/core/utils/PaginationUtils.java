@@ -1,13 +1,13 @@
-package ru.practicum.ewm.core.mapper;
+package ru.practicum.ewm.core.utils;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import ru.practicum.ewm.core.exception.ValidationException;
 
-public class PaginationMapper extends PageRequest {
+public class PaginationUtils extends PageRequest {
 
-    protected PaginationMapper(int page, int size, Sort sort) {
+    protected PaginationUtils(int page, int size, Sort sort) {
         super(page, size, sort);
     }
 
@@ -16,7 +16,7 @@ public class PaginationMapper extends PageRequest {
             return null;
         }
 
-       if (size <= 0 || from < 0) {
+        if (size <= 0 || from < 0) {
             throw new ValidationException("Уточнчите правильность параметров отображения");
         }
 

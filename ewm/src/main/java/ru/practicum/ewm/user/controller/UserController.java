@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.core.mapper.PaginationMapper;
+import ru.practicum.ewm.core.utils.PaginationUtils;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserRequestDto;
 import ru.practicum.ewm.user.mapper.UserMapper;
@@ -45,6 +45,6 @@ public class UserController {
                                      @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Запрос на выдачу пользователей");
         return userMapper.listUserToListUserDto(userService.getUsersByIds(
-                userIds, PaginationMapper.toMakePage(from, size)));
+                userIds, PaginationUtils.toMakePage(from, size)));
     }
 }

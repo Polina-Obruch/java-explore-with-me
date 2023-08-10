@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.compilation.dto.CompilationDto;
 import ru.practicum.ewm.compilation.mapper.CompilationMapper;
 import ru.practicum.ewm.compilation.service.CompilationService;
-import ru.practicum.ewm.core.mapper.PaginationMapper;
+import ru.practicum.ewm.core.utils.PaginationUtils;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/compilations")
-public class CompilationControllerPublic {
+public class PublicCompilationController {
     private final CompilationService compilationService;
     private final CompilationMapper compilationMapper;
 
@@ -28,7 +28,7 @@ public class CompilationControllerPublic {
                                                    @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Запрос на выдачу подборок событий - public");
         return compilationMapper.listCompilationToListCompilationDto(
-                compilationService.getCompilationsPublic(pinned, PaginationMapper.toMakePage(from, size)));
+                compilationService.getCompilationsPublic(pinned, PaginationUtils.toMakePage(from, size)));
     }
 
     @GetMapping("/{compilationId}")

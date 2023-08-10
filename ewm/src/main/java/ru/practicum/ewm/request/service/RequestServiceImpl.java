@@ -13,7 +13,7 @@ import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.request.model.RequestStatus;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
-import ru.practicum.ewm.user.service.UserService;
+import ru.practicum.ewm.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,14 +24,15 @@ import java.util.Objects;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
 
     @Transactional
     @Override
     public Request addRequest(Long userId, Long eventId) {
-        User user = userService.getUserById(userId);
+        User user = userRepository.findById(userId).orElseThrow(()
+                -> new EntityNotFoundException("User", userId));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
 
@@ -77,7 +78,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public Request cancelRequest(Long userId, Long requestId) {
-        userService.getUserById(userId);
+        isExistUser(userId);
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException("Request", requestId));
 
@@ -91,7 +92,13 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<Request> getRequestsByUserId(Long userId) {
-        userService.getUserById(userId);
+        isExistUser(userId);
         return requestRepository.findAllByRequesterId(userId);
+    }
+
+    private void isExistUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new EntityNotFoundException("User", userId);
+        }
     }
 }

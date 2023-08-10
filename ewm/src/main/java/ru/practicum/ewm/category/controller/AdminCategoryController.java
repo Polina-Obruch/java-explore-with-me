@@ -15,7 +15,7 @@ import javax.validation.Valid;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/admin/categories")
-public class CategoryControllerAdmin {
+public class AdminCategoryController {
     private final CategoryService categoryService;
     private final CategoryMapper categoryMapper;
 
@@ -23,16 +23,16 @@ public class CategoryControllerAdmin {
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryDto createCategory(@Valid @RequestBody CategoryRequestDto categoryRequestDto) {
         log.info("Запрос на создание категории");
-        return categoryMapper.categoryToCategoryDto(
-                categoryService.addCategory(categoryMapper.categoryRequestDtoToCategory(categoryRequestDto)));
+        return categoryMapper.toCategoryDto(
+                categoryService.addCategory(categoryMapper.toCategory(categoryRequestDto)));
     }
 
     @PatchMapping("/{categoryId}")
     public CategoryDto updateCategory(@PathVariable Long categoryId,
                                       @Valid @RequestBody CategoryRequestDto categoryRequestDto) {
         log.info("Запрос на обновление категории");
-        return categoryMapper.categoryToCategoryDto(categoryService.updateCategory(
-                categoryId, categoryMapper.categoryRequestDtoToCategory(categoryRequestDto)));
+        return categoryMapper.toCategoryDto(categoryService.updateCategory(
+                categoryId, categoryMapper.toCategory(categoryRequestDto)));
     }
 
     @DeleteMapping("/{categoryId}")

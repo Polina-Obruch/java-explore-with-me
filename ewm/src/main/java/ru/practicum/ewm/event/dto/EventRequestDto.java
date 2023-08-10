@@ -37,7 +37,6 @@ public class EventRequestDto {
     @NotNull
     private LocationDto location;
 
-    //Правильно ли так задавать дефолтные значения для dto
     private boolean paid = false;
 
     @PositiveOrZero

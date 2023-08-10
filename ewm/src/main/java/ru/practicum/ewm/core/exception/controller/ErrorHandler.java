@@ -26,12 +26,12 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleBindException(MethodArgumentNotValidException exp) {
+    public ApiError handleBindException(MethodArgumentNotValidException exc) {
         //Ошибок валидации может быть несколько - возвращаем информацию по всем полям
-        Map<String, String> errors = exp.getBindingResult().getFieldErrors().stream().collect(
+        Map<String, String> errors = exc.getBindingResult().getFieldErrors().stream().collect(
                 Collectors.toMap(FieldError::getField,
                         Objects.requireNonNull(DefaultMessageSourceResolvable::getDefaultMessage)));
-        log.error(errors.toString());
+        log.error(errors.toString(), exc);
         return new ApiError(
                 HttpStatus.BAD_REQUEST,
                 "Incorrectly made request.",
@@ -41,67 +41,68 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiError handleEntityNotFoundException(final EntityNotFoundException exp) {
-        log.error(exp.getMessage());
+    public ApiError handleEntityNotFoundException(final EntityNotFoundException exc) {
+        log.error(exc.getMessage(), exc);
         return new ApiError(
                 HttpStatus.NOT_FOUND,
                 "The required object was not found.",
-                exp.getMessage(),
+                exc.getMessage(),
                 LocalDateTime.now());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleRequiredRequestParameter(final MissingServletRequestParameterException exp) {
-        log.error(exp.getMessage());
+    public ApiError handleRequiredRequestParameter(final MissingServletRequestParameterException exc) {
+        log.error(exc.getMessage(), exc);
         return new ApiError(
                 HttpStatus.BAD_REQUEST,
                 "Incorrectly made request.",
-                exp.getMessage(),
+                exc.getMessage(),
                 LocalDateTime.now());
     }
 
     @ExceptionHandler(value = {ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleValidation(final RuntimeException exp) {
-        log.error(exp.getMessage());
+    public ApiError handleValidation(final RuntimeException exc) {
+        log.error(exc.getMessage(), exc);
         return new ApiError(
                 HttpStatus.BAD_REQUEST,
                 "Incorrectly made request.",
-                exp.getMessage(),
+                exc.getMessage(),
                 LocalDateTime.now());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleValidation(final ConflictException exp) {
-        log.error(exp.getMessage());
+    public ApiError handleValidation(final ConflictException exc) {
+        log.error(exc.getMessage(), exc);
         return new ApiError(
                 HttpStatus.CONFLICT,
                 "For the requested operation the conditions are not met.",
-                exp.getMessage(),
+                exc.getMessage(),
                 LocalDateTime.now());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleIntegrityException(DataAccessException exception) {
+    public ApiError handleIntegrityException(DataAccessException exc) {
+        log.error(exc.getMessage(), exc);
         return new ApiError(
                 HttpStatus.CONFLICT,
                 "Integrity constraint has been violated.",
-                exception.getMessage(),
+                exc.getMessage(),
                 LocalDateTime.now()
         );
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleThrowable(final Throwable exp) {
-        log.error("Произошла непредвиденная ошибка.{}", exp.getMessage());
+    public ApiError handleThrowable(final Throwable exc) {
+        log.error("Произошла непредвиденная ошибка.{}", exc.getMessage());
         return new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                exp.getClass().getName(),
-                exp.getMessage(),
+                exc.getClass().getName(),
+                exc.getMessage(),
                 LocalDateTime.now());
     }
 }

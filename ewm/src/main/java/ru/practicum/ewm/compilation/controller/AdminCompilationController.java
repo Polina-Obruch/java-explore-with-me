@@ -16,7 +16,7 @@ import javax.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/compilations")
-public class CompilationControllerAdmin {
+public class AdminCompilationController {
     private final CompilationService compilationService;
     private final CompilationMapper compilationMapper;
 

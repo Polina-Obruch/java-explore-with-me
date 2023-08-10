@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
-import ru.practicum.ewm.category.service.CategoryService;
+import ru.practicum.ewm.category.repository.CategoryRepository;
 import ru.practicum.ewm.core.exception.EntityNotFoundException;
 import ru.practicum.ewm.core.exception.ConflictException;
 import ru.practicum.ewm.core.exception.ValidationException;
@@ -23,7 +23,7 @@ import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.request.model.RequestStatus;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
-import ru.practicum.ewm.user.service.UserService;
+import ru.practicum.ewm.user.repository.UserRepository;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.CreateEndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
@@ -42,8 +42,8 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
-    private final UserService userService;
-    private final CategoryService categoryService;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final LocationMapper locationMapper;
     private final RequestMapper requestMapper;
     private static final String APP_NAME = "ewm";
@@ -53,8 +53,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event addEventPrivate(Long userId, Event event) {
         log.info("Добавление события - private");
-        User user = userService.getUserById(userId);
-        Category category = categoryService.getCategoryById(event.getCategory().getId());
+        User user = userRepository.findById(userId).orElseThrow(()
+                -> new EntityNotFoundException("User", userId));
+
+        Category category = categoryRepository.findById(event.getCategory().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Category", event.getCategory().getId()));
 
         checkTimeValidationPrivate(event.getEventDate());
 
@@ -69,9 +72,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event getEventByIdPrivate(Long userId, Long eventId) {
         log.info(String.format("Выдача события c id = %d - private", eventId));
-        userService.getUserById(userId);
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        isExistUser(userId);
+        Event event = checkExistEvent(eventId);
 
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new EntityNotFoundException("Event", eventId);
@@ -85,9 +87,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event updateEventPrivate(Long userId, Long eventId, EventUpdateUserRequestDto eventUpdate) {
         log.info(String.format("Обновление события c id = %d - private", eventId));
-        userService.getUserById(userId);
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        isExistUser(userId);
+        Event event = checkExistEvent(eventId);
 
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new EntityNotFoundException("Event", eventId);
@@ -125,8 +126,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> getAllEventsPrivate(Long userId, Pageable page) {
         log.info(String.format("Выдача событий владельца c id = %d - private", userId));
-        //нужна ли проверка на существования пользователя
-        // тут добавляем статистику просмотров
+        isExistUser(userId);
         List<Event> events = eventRepository.findAllByInitiatorId(userId, page);
         this.setViewsAndConfirmedRequest(events);
         return events;
@@ -136,9 +136,10 @@ public class EventServiceImpl implements EventService {
     public List<RequestDto> getAllRequestByEventIdPrivate(Long userId, Long eventId) {
         log.info(String.format("Выдача заявок на участие в мероприятии (eventId = %d) " +
                 "владельца c id = %d - private", eventId, userId));
-        userService.getUserById(userId);
-        eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        isExistUser(userId);
+        if (!eventRepository.existsById(eventId)) {
+            throw new EntityNotFoundException("Event", eventId);
+        }
         return requestMapper.requestListToRequestDtoList(
                 requestRepository.findAllByEventIdAndEventInitiatorId(eventId, userId));
     }
@@ -148,9 +149,8 @@ public class EventServiceImpl implements EventService {
     public AnswerStatusUpdateDto updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdateDto statusUpdateDto) {
         log.info(String.format("Подтверждение/Отклонение заявок на участие в мероприятии (eventId = %d) " +
                 "владельца c id = %d - private", eventId, userId));
-        userService.getUserById(userId);
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        isExistUser(userId);
+        Event event = checkExistEvent(eventId);
 
         Integer countConfirmedRequests = requestRepository.findCountOfEventConfirmedRequests(eventId);
         // ParticipantLimit == 0 - безграничное количество участий
@@ -196,8 +196,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event updateEventAdmin(Long eventId, EventUpdateAdminRequestDto eventUpdate) {
         log.info(String.format("Обновление события c id = %d - admin", eventId));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        Event event = checkExistEvent(eventId);
 
         //Обновление всех возможных полей
         this.updateEvent(event, eventUpdate);
@@ -277,8 +276,7 @@ public class EventServiceImpl implements EventService {
     public Event getEventByIdPublic(Long eventId, HttpServletRequest request) {
         log.info(String.format("Выдача события c id = %d - public", eventId));
         this.sendStatistic(request);
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
+        Event event = checkExistEvent(eventId);
 
         if (event.getState() != State.PUBLISHED) {
             throw new EntityNotFoundException("Event", eventId);
@@ -300,7 +298,8 @@ public class EventServiceImpl implements EventService {
 
         Long categoryId = eventUpdate.getCategory();
         if (categoryId != null) {
-            Category category = categoryService.getCategoryById(categoryId);
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new EntityNotFoundException("Category", categoryId));
             event.setCategory(category);
         }
 
@@ -330,6 +329,17 @@ public class EventServiceImpl implements EventService {
         if (eventUpdate.getRequestModeration() != null) {
             event.setRequestModeration(eventUpdate.getRequestModeration());
         }
+    }
+
+    private void isExistUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new EntityNotFoundException("User", userId);
+        }
+    }
+
+    private Event checkExistEvent(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
     }
 
     private void checkTimeValidationPrivate(LocalDateTime eventDate) {
