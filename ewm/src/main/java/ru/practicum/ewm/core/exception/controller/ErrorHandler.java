@@ -1,8 +1,9 @@
 package ru.practicum.ewm.core.exception.controller;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +16,7 @@ import ru.practicum.ewm.core.exception.ConflictException;
 import ru.practicum.ewm.core.exception.ValidationException;
 import ru.practicum.ewm.core.exception.model.ApiError;
 
+import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
@@ -61,6 +63,17 @@ public class ErrorHandler {
                 LocalDateTime.now());
     }
 
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handlePaginationParameter(final ConstraintViolationException exc) {
+        log.error(exc.getMessage(), exc);
+        return new ApiError(
+                HttpStatus.BAD_REQUEST,
+                "Incorrectly made request.",
+                exc.getMessage(),
+                LocalDateTime.now());
+    }
+
     @ExceptionHandler(value = {ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleValidation(final RuntimeException exc) {
@@ -85,7 +98,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleIntegrityException(DataAccessException exc) {
+    public ApiError handleIntegrityException(DataIntegrityViolationException exc) {
         log.error(exc.getMessage(), exc);
         return new ApiError(
                 HttpStatus.CONFLICT,

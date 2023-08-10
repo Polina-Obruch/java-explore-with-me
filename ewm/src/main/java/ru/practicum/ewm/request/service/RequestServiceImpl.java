@@ -36,11 +36,6 @@ public class RequestServiceImpl implements RequestService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
 
-        //Проверка на повторное участия
-        requestRepository.findByRequesterIdAndEventId(userId, eventId).ifPresent(request -> {
-            throw new ConflictException("Request can not be sent twice");
-        });
-
         //проверка - инициатор события не может добавить запрос на участие в своём событии
         if (Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ConflictException("Initiator of the event can not send requests to his event");
@@ -53,8 +48,8 @@ public class RequestServiceImpl implements RequestService {
 
         // проверка - если у события достигнут лимит запросов на участие - необходимо вернуть ошибку
         // ParticipantLimit == 0 - безграничное количество участий
-        if (event.getParticipantLimit() != 0 && Objects.equals(
-                requestRepository.findCountOfEventConfirmedRequests(eventId), event.getParticipantLimit())) {
+        if (event.getParticipantLimit() != 0 &&
+                requestRepository.findCountOfEventConfirmedRequests(eventId) >= event.getParticipantLimit()) {
             throw new ConflictException("The limit of participants has been exceeded");
         }
 

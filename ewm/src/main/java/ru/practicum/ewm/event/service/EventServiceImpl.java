@@ -30,7 +30,6 @@ import ru.practicum.stats.dto.ViewStatsDto;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -157,7 +156,7 @@ public class EventServiceImpl implements EventService {
         Integer participantLimit = event.getParticipantLimit();
 
         // проверка - если у события достигнут лимит запросов на участие - необходимо вернуть ошибку
-        if (participantLimit != 0 && Objects.equals(countConfirmedRequests, participantLimit)) {
+        if (participantLimit != 0 && countConfirmedRequests >= participantLimit){
             throw new ConflictException("The limit of participants has been exceeded");
         }
 
@@ -180,7 +179,7 @@ public class EventServiceImpl implements EventService {
         List<RequestDto> rejectedRequests = new ArrayList<>();
 
         requests.forEach(request -> {
-            if (countConfirmedRequests <= participantLimit) {
+            if (countConfirmedRequests < participantLimit) {
                 request.setStatus(RequestStatus.CONFIRMED);
                 confirmedRequests.add(requestMapper.requestToRequestDto(request));
             } else {
@@ -377,14 +376,13 @@ public class EventServiceImpl implements EventService {
         Map<String, Event> eventsMap = events.stream()
                 .collect(Collectors.toMap(event -> "/events/" + event.getId(), event -> event));
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         ObjectMapper objectMapper = new ObjectMapper();
 
         LocalDateTime minStart = LocalDateTime.now().minusYears(10);
         LocalDateTime maxEnd = LocalDateTime.now().plusYears(10);
 
-        Object rawStatistics = statsClient.getStatistics(minStart.format(formatter),
-                maxEnd.format(formatter), new ArrayList<>(eventsMap.keySet()), true).getBody();
+        Object rawStatistics = statsClient.getStatistics(minStart,
+                maxEnd, new ArrayList<>(eventsMap.keySet()), true).getBody();
 
         List<ViewStatsDto> viewStatsList = objectMapper.convertValue(rawStatistics, new TypeReference<>() {
         });
