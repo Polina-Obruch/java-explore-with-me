@@ -5,7 +5,6 @@ import org.mapstruct.Mapping;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.compilation.dto.CompilationDto;
 import ru.practicum.ewm.compilation.dto.CompilationRequestDto;
-import ru.practicum.ewm.compilation.dto.CompilationUpdateDto;
 import ru.practicum.ewm.compilation.model.Compilation;
 
 import java.util.List;
@@ -15,12 +14,9 @@ import java.util.List;
 public interface CompilationMapper {
 
     @Mapping(target = "events", ignore = true)
-    Compilation compilationRequestDtoToCompilation(CompilationRequestDto compilationRequestDto);
+    Compilation toCompilation(CompilationRequestDto compilationRequestDto);
 
-    CompilationDto compilationToCompilationDto(Compilation compilation);
+    CompilationDto toCompilationDto(Compilation compilation);
 
-    @Mapping(target = "events", ignore = true)
-    Compilation compilationUpdateDtoToCompilation(CompilationUpdateDto compilationUpdateDto);
-
-    List<CompilationDto> listCompilationToListCompilationDto(List<Compilation> compilations);
+    List<CompilationDto> toListCompilationDto(List<Compilation> compilations);
 }

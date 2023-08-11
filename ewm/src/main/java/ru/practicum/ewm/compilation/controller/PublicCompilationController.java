@@ -27,13 +27,13 @@ public class PublicCompilationController {
                                                    @PositiveOrZero @RequestParam(defaultValue = "0") int from,
                                                    @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Запрос на выдачу подборок событий - public");
-        return compilationMapper.listCompilationToListCompilationDto(
+        return compilationMapper.toListCompilationDto(
                 compilationService.getCompilationsPublic(pinned, PaginationUtils.toMakePage(from, size)));
     }
 
     @GetMapping("/{compilationId}")
     public CompilationDto getCompilationById(@PathVariable Long compilationId) {
         log.info("Запрос на выдачу подборки событий - public");
-        return compilationMapper.compilationToCompilationDto(compilationService.getCompilationByIdPublic(compilationId));
+        return compilationMapper.toCompilationDto(compilationService.getCompilationByIdPublic(compilationId));
     }
 }

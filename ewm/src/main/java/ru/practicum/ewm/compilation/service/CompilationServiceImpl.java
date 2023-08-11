@@ -28,6 +28,12 @@ public class CompilationServiceImpl implements CompilationService {
         if (eventIds != null) {
             compilation.setEvents(eventRepository.findAllByIdIn(eventIds));
         }
+
+        // Добавляем default значение
+        if (compilation.getPinned() == null) {
+            compilation.setPinned(false);
+        }
+
         return compilationRepository.save(compilation);
     }
 
