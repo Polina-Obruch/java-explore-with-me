@@ -42,7 +42,7 @@ public class Event {
     @JoinColumn(name = "LOCATION_ID")
     private Location location;
 
-    private boolean paid;
+    private Boolean paid;
 
     @JoinColumn(name = "PARTICIPANT_LIMIT")
     private Integer participantLimit;
@@ -51,7 +51,7 @@ public class Event {
     private LocalDateTime publishedOn;
 
     @JoinColumn(name = "REQUEST_MODERATION")
-    private boolean requestModeration;
+    private Boolean requestModeration;
 
     @Enumerated(EnumType.STRING)
     private State state;

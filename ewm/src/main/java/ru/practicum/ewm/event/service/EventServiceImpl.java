@@ -12,15 +12,13 @@ import ru.practicum.ewm.category.repository.CategoryRepository;
 import ru.practicum.ewm.core.exception.EntityNotFoundException;
 import ru.practicum.ewm.core.exception.ConflictException;
 import ru.practicum.ewm.core.exception.ValidationException;
-import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.model.*;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
-import ru.practicum.ewm.request.dto.RequestDto;
-import ru.practicum.ewm.request.mapper.RequestMapper;
+import ru.practicum.ewm.request.model.AnswerStatusUpdate;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.request.model.RequestStatus;
+import ru.practicum.ewm.request.model.RequestStatusUpdate;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
@@ -38,14 +36,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
+    private static final String APP_NAME = "ewm";
     private final EventRepository eventRepository;
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
-    private final LocationMapper locationMapper;
-    private final RequestMapper requestMapper;
-    private static final String APP_NAME = "ewm";
     private final StatsClient statsClient;
 
     @Transactional
@@ -59,6 +55,19 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new EntityNotFoundException("Category", event.getCategory().getId()));
 
         checkTimeValidationPrivate(event.getEventDate());
+
+        // Установка default значений
+        if (event.getPaid() == null) {
+            event.setPaid(false);
+        }
+
+        if (event.getParticipantLimit() == null) {
+            event.setParticipantLimit(0);
+        }
+
+        if (event.getRequestModeration() == null) {
+            event.setRequestModeration(true);
+        }
 
         event.setInitiator(user);
         event.setCategory(category);
@@ -84,7 +93,7 @@ public class EventServiceImpl implements EventService {
 
     @Transactional
     @Override
-    public Event updateEventPrivate(Long userId, Long eventId, EventUpdateUserRequestDto eventUpdate) {
+    public Event updateEventPrivate(Long userId, Long eventId, Event eventUpdate, StateUserAction stateAction) {
         log.info(String.format("Обновление события c id = %d - private", eventId));
         isExistUser(userId);
         Event event = checkExistEvent(eventId);
@@ -101,8 +110,6 @@ public class EventServiceImpl implements EventService {
             checkTimeValidationPrivate(updateTime);
             event.setEventDate(updateTime);
         }
-
-        StateUserAction stateAction = eventUpdate.getStateAction();
 
         if (stateAction != null) {
             switch (stateAction) {
@@ -132,20 +139,19 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<RequestDto> getAllRequestByEventIdPrivate(Long userId, Long eventId) {
+    public List<Request> getAllRequestByEventIdPrivate(Long userId, Long eventId) {
         log.info(String.format("Выдача заявок на участие в мероприятии (eventId = %d) " +
                 "владельца c id = %d - private", eventId, userId));
         isExistUser(userId);
         if (!eventRepository.existsById(eventId)) {
             throw new EntityNotFoundException("Event", eventId);
         }
-        return requestMapper.requestListToRequestDtoList(
-                requestRepository.findAllByEventIdAndEventInitiatorId(eventId, userId));
+        return requestRepository.findAllByEventIdAndEventInitiatorId(eventId, userId);
     }
 
     @Transactional
     @Override
-    public AnswerStatusUpdateDto updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdateDto statusUpdateDto) {
+    public AnswerStatusUpdate updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdate statusUpdate) {
         log.info(String.format("Подтверждение/Отклонение заявок на участие в мероприятии (eventId = %d) " +
                 "владельца c id = %d - private", eventId, userId));
         isExistUser(userId);
@@ -156,11 +162,11 @@ public class EventServiceImpl implements EventService {
         Integer participantLimit = event.getParticipantLimit();
 
         // проверка - если у события достигнут лимит запросов на участие - необходимо вернуть ошибку
-        if (participantLimit != 0 && countConfirmedRequests >= participantLimit){
+        if (participantLimit != 0 && countConfirmedRequests >= participantLimit) {
             throw new ConflictException("The limit of participants has been exceeded");
         }
 
-        List<Request> requests = requestRepository.getRequestsForUpdating(eventId, userId, statusUpdateDto.getRequestIds());
+        List<Request> requests = requestRepository.getRequestsForUpdating(eventId, userId, statusUpdate.getRequestIds());
 
         requests.forEach(request -> {
             if (request.getStatus() != RequestStatus.PENDING) {
@@ -168,32 +174,30 @@ public class EventServiceImpl implements EventService {
             }
         });
 
-        if (statusUpdateDto.getStatus() == RequestStatus.REJECTED) {
+        if (statusUpdate.getStatus() == RequestStatus.REJECTED) {
             requests.forEach(request -> request.setStatus(RequestStatus.REJECTED));
-            List<RequestDto> rejectedRequests = requests.stream().map(requestMapper::requestToRequestDto).collect(Collectors.toList());
-
-            return new AnswerStatusUpdateDto(Collections.emptyList(), rejectedRequests);
+            return new AnswerStatusUpdate(Collections.emptyList(), requests);
         }
 
-        List<RequestDto> confirmedRequests = new ArrayList<>();
-        List<RequestDto> rejectedRequests = new ArrayList<>();
+        List<Request> confirmedRequests = new ArrayList<>();
+        List<Request> rejectedRequests = new ArrayList<>();
 
         requests.forEach(request -> {
             if (countConfirmedRequests < participantLimit) {
                 request.setStatus(RequestStatus.CONFIRMED);
-                confirmedRequests.add(requestMapper.requestToRequestDto(request));
+                confirmedRequests.add(request);
             } else {
                 request.setStatus(RequestStatus.REJECTED);
-                rejectedRequests.add(requestMapper.requestToRequestDto(request));
+                rejectedRequests.add(request);
             }
         });
 
-        return new AnswerStatusUpdateDto(confirmedRequests, rejectedRequests);
+        return new AnswerStatusUpdate(confirmedRequests, rejectedRequests);
     }
 
     @Transactional
     @Override
-    public Event updateEventAdmin(Long eventId, EventUpdateAdminRequestDto eventUpdate) {
+    public Event updateEventAdmin(Long eventId, Event eventUpdate, StateAdminAction stateAction) {
         log.info(String.format("Обновление события c id = %d - admin", eventId));
         Event event = checkExistEvent(eventId);
 
@@ -205,8 +209,6 @@ public class EventServiceImpl implements EventService {
             checkTimeValidationAdmin(updateTime);
             event.setEventDate(updateTime);
         }
-
-        StateAdminAction stateAction = eventUpdate.getStateAction();
 
         if (stateAction != null) {
             switch (stateAction) {
@@ -286,7 +288,7 @@ public class EventServiceImpl implements EventService {
     }
 
 
-    private void updateEvent(Event event, EventUpdateDto eventUpdate) {
+    private void updateEvent(Event event, Event eventUpdate) {
         if (event.getState().equals(State.PUBLISHED)) {
             throw new ConflictException("Only pending or canceled events can be changed");
         }
@@ -295,7 +297,7 @@ public class EventServiceImpl implements EventService {
             event.setAnnotation(eventUpdate.getAnnotation());
         }
 
-        Long categoryId = eventUpdate.getCategory();
+        Long categoryId = eventUpdate.getCategory().getId();
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new EntityNotFoundException("Category", categoryId));
@@ -310,9 +312,8 @@ public class EventServiceImpl implements EventService {
             event.setDescription(eventUpdate.getDescription());
         }
 
-        LocationDto locationDto = eventUpdate.getLocation();
-        if (locationDto != null) {
-            Location location = locationMapper.locationDtoToLocation(locationDto);
+        Location location = eventUpdate.getLocation();
+        if (location != null) {
             locationRepository.save(location);
             event.setLocation(location);
         }

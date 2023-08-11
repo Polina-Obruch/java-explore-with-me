@@ -56,7 +56,7 @@ public class RequestServiceImpl implements RequestService {
         //Статус заявки подтвержден по default
         RequestStatus status = RequestStatus.CONFIRMED;
 
-        if (event.isRequestModeration() && event.getParticipantLimit() != 0) {
+        if (event.getRequestModeration() && event.getParticipantLimit() != 0) {
             status = RequestStatus.PENDING;
         }
 

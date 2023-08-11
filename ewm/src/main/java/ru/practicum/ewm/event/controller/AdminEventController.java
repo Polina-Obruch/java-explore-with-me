@@ -28,7 +28,8 @@ public class AdminEventController {
     @PatchMapping("/{eventId}")
     public EventFullDto moderateEvent(@PathVariable Long eventId, @Valid @RequestBody EventUpdateAdminRequestDto updateEventDto) {
         log.info("Запрос на модерацию события - admin");
-        return eventMapper.eventToEventFullDto(eventService.updateEventAdmin(eventId, updateEventDto));
+        return eventMapper.eventToEventFullDto(eventService.updateEventAdmin(
+                eventId, eventMapper.eventRequestDtoToEvent(updateEventDto), updateEventDto.getStateAction()));
     }
 
     @GetMapping

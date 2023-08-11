@@ -9,6 +9,6 @@ import ru.practicum.ewm.event.model.StateUserAction;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventUpdateUserRequestDto extends EventUpdateDto {
+public class EventUpdateUserRequestDto extends EventRequestDto {
     private StateUserAction stateAction;
 }

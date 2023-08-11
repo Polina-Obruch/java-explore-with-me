@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.practicum.ewm.core.utils.Marker;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -18,33 +19,33 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventRequestDto {
-    @NotBlank
+    @NotBlank(groups = {Marker.OnCreate.class})
     @Size(min = 20, max = 2000)
     private String annotation;
 
-    @NotNull
+    @NotNull(groups = {Marker.OnCreate.class})
     private Long category;
 
-    @NotBlank
+    @NotBlank(groups = {Marker.OnCreate.class})
     @Size(min = 20, max = 7000)
     private String description;
 
-    @NotNull
+    @NotBlank(groups = {Marker.OnCreate.class})
+    @Size(min = 3, max = 120)
+    private String title;
+
+    @NotNull(groups = {Marker.OnCreate.class})
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
     @Valid
-    @NotNull
+    @NotNull(groups = {Marker.OnCreate.class})
     private LocationDto location;
 
-    private boolean paid = false;
+    private Boolean paid;
 
     @PositiveOrZero
-    private int participantLimit = 0;
+    private Integer participantLimit;
 
-    private boolean requestModeration = true;
-
-    @NotBlank
-    @Size(min = 3, max = 120)
-    private String title;
+    private Boolean requestModeration;
 }

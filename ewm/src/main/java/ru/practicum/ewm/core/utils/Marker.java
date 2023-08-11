@@ -1,4 +1,4 @@
-package ru.practicum.ewm.compilation.dto;
+package ru.practicum.ewm.core.utils;
 
 public interface Marker {
     interface OnCreate {
