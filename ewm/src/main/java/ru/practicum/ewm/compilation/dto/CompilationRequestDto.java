@@ -1,7 +1,7 @@
 package ru.practicum.ewm.compilation.dto;
 
 import lombok.*;
-import ru.practicum.ewm.core.utils.Marker;
+import ru.practicum.ewm.validation.group.Marker;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;

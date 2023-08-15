@@ -73,7 +73,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public Request cancelRequest(Long userId, Long requestId) {
-        isExistUser(userId);
+        checkIfUserExists(userId);
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException("Request", requestId));
 
@@ -87,11 +87,11 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<Request> getRequestsByUserId(Long userId) {
-        isExistUser(userId);
+        checkIfUserExists(userId);
         return requestRepository.findAllByRequesterId(userId);
     }
 
-    private void isExistUser(Long userId) {
+    private void checkIfUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("User", userId);
         }

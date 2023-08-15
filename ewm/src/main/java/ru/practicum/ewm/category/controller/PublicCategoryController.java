@@ -33,6 +33,6 @@ public class PublicCategoryController {
                                               @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Запрос на выдачу списка категорий");
         return categoryMapper.toCategoryDtoList(
-                categoryService.getAllCategories(PaginationUtils.toMakePage(from, size)));
+                categoryService.getAllCategories(PaginationUtils.toPage(from, size)));
     }
 }

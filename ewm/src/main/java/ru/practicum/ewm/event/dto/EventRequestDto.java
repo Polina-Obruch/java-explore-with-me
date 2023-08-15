@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.ewm.core.utils.Marker;
+import ru.practicum.ewm.validation.group.Marker;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;

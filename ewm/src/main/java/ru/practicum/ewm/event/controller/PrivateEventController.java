@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.core.utils.Marker;
+import ru.practicum.ewm.validation.group.Marker;
 import ru.practicum.ewm.core.utils.PaginationUtils;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
@@ -58,7 +58,7 @@ public class PrivateEventController {
                                             @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                             @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Запрос на выдачу списка событий - private");
-        return eventMapper.listEventsToListEventShortSto(eventService.getAllEventsPrivate(userId, PaginationUtils.toMakePage(from, size)));
+        return eventMapper.listEventsToListEventShortSto(eventService.getAllEventsPrivate(userId, PaginationUtils.toPage(from, size)));
     }
 
     @PatchMapping("/{eventId}/requests")

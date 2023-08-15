@@ -52,29 +52,8 @@ public class ErrorHandler {
                 LocalDateTime.now());
     }
 
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleRequiredRequestParameter(final MissingServletRequestParameterException exc) {
-        log.error(exc.getMessage(), exc);
-        return new ApiError(
-                HttpStatus.BAD_REQUEST,
-                "Incorrectly made request.",
-                exc.getMessage(),
-                LocalDateTime.now());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handlePaginationParameter(final ConstraintViolationException exc) {
-        log.error(exc.getMessage(), exc);
-        return new ApiError(
-                HttpStatus.BAD_REQUEST,
-                "Incorrectly made request.",
-                exc.getMessage(),
-                LocalDateTime.now());
-    }
-
-    @ExceptionHandler(value = {ValidationException.class})
+    @ExceptionHandler(value = {ValidationException.class, ConstraintViolationException.class,
+            MissingServletRequestParameterException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleValidation(final RuntimeException exc) {
         log.error(exc.getMessage(), exc);

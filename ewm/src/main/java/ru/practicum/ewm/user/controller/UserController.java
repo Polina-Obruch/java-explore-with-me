@@ -45,6 +45,6 @@ public class UserController {
                                      @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Запрос на выдачу пользователей");
         return userMapper.listUserToListUserDto(userService.getUsersByIds(
-                userIds, PaginationUtils.toMakePage(from, size)));
+                userIds, PaginationUtils.toPage(from, size)));
     }
 }

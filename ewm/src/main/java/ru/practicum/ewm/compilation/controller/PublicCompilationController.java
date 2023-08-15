@@ -28,7 +28,7 @@ public class PublicCompilationController {
                                                    @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Запрос на выдачу подборок событий - public");
         return compilationMapper.toListCompilationDto(
-                compilationService.getCompilationsPublic(pinned, PaginationUtils.toMakePage(from, size)));
+                compilationService.getCompilationsPublic(pinned, PaginationUtils.toPage(from, size)));
     }
 
     @GetMapping("/{compilationId}")

@@ -29,6 +29,7 @@ import ru.practicum.stats.dto.ViewStatsDto;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -80,8 +81,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event getEventByIdPrivate(Long userId, Long eventId) {
         log.info(String.format("Выдача события c id = %d - private", eventId));
-        isExistUser(userId);
-        Event event = checkExistEvent(eventId);
+        checkIfUserExists(userId);
+        Event event = getEvent(eventId);
 
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new EntityNotFoundException("Event", eventId);
@@ -95,8 +96,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event updateEventPrivate(Long userId, Long eventId, Event eventUpdate, StateUserAction stateAction) {
         log.info(String.format("Обновление события c id = %d - private", eventId));
-        isExistUser(userId);
-        Event event = checkExistEvent(eventId);
+        checkIfUserExists(userId);
+        Event event = getEvent(eventId);
 
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new EntityNotFoundException("Event", eventId);
@@ -132,7 +133,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> getAllEventsPrivate(Long userId, Pageable page) {
         log.info(String.format("Выдача событий владельца c id = %d - private", userId));
-        isExistUser(userId);
+        checkIfUserExists(userId);
         List<Event> events = eventRepository.findAllByInitiatorId(userId, page);
         this.setViewsAndConfirmedRequest(events);
         return events;
@@ -142,7 +143,7 @@ public class EventServiceImpl implements EventService {
     public List<Request> getAllRequestByEventIdPrivate(Long userId, Long eventId) {
         log.info(String.format("Выдача заявок на участие в мероприятии (eventId = %d) " +
                 "владельца c id = %d - private", eventId, userId));
-        isExistUser(userId);
+        checkIfUserExists(userId);
         if (!eventRepository.existsById(eventId)) {
             throw new EntityNotFoundException("Event", eventId);
         }
@@ -154,15 +155,15 @@ public class EventServiceImpl implements EventService {
     public AnswerStatusUpdate updateStatusEventRequestPrivate(Long userId, Long eventId, RequestStatusUpdate statusUpdate) {
         log.info(String.format("Подтверждение/Отклонение заявок на участие в мероприятии (eventId = %d) " +
                 "владельца c id = %d - private", eventId, userId));
-        isExistUser(userId);
-        Event event = checkExistEvent(eventId);
+        checkIfUserExists(userId);
+        Event event = getEvent(eventId);
 
-        Integer countConfirmedRequests = requestRepository.findCountOfEventConfirmedRequests(eventId);
+        AtomicReference<Integer> countConfirmedRequests = new AtomicReference<>(requestRepository.findCountOfEventConfirmedRequests(eventId));
         // ParticipantLimit == 0 - безграничное количество участий
         Integer participantLimit = event.getParticipantLimit();
 
         // проверка - если у события достигнут лимит запросов на участие - необходимо вернуть ошибку
-        if (participantLimit != 0 && countConfirmedRequests >= participantLimit) {
+        if (participantLimit != 0 && countConfirmedRequests.get() >= participantLimit) {
             throw new ConflictException("The limit of participants has been exceeded");
         }
 
@@ -183,9 +184,11 @@ public class EventServiceImpl implements EventService {
         List<Request> rejectedRequests = new ArrayList<>();
 
         requests.forEach(request -> {
-            if (countConfirmedRequests < participantLimit) {
+            if (countConfirmedRequests.get() < participantLimit) {
                 request.setStatus(RequestStatus.CONFIRMED);
                 confirmedRequests.add(request);
+                // во время цикла должно быть изменение count иначе можем подтвердить больше заявок
+                countConfirmedRequests.getAndSet(countConfirmedRequests.get() + 1);
             } else {
                 request.setStatus(RequestStatus.REJECTED);
                 rejectedRequests.add(request);
@@ -199,7 +202,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event updateEventAdmin(Long eventId, Event eventUpdate, StateAdminAction stateAction) {
         log.info(String.format("Обновление события c id = %d - admin", eventId));
-        Event event = checkExistEvent(eventId);
+        Event event = getEvent(eventId);
 
         //Обновление всех возможных полей
         this.updateEvent(event, eventUpdate);
@@ -277,7 +280,7 @@ public class EventServiceImpl implements EventService {
     public Event getEventByIdPublic(Long eventId, HttpServletRequest request) {
         log.info(String.format("Выдача события c id = %d - public", eventId));
         this.sendStatistic(request);
-        Event event = checkExistEvent(eventId);
+        Event event = getEvent(eventId);
 
         if (event.getState() != State.PUBLISHED) {
             throw new EntityNotFoundException("Event", eventId);
@@ -331,13 +334,13 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void isExistUser(Long userId) {
+    private void checkIfUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("User", userId);
         }
     }
 
-    private Event checkExistEvent(Long eventId) {
+    private Event getEvent(Long eventId) {
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event", eventId));
     }
@@ -365,6 +368,9 @@ public class EventServiceImpl implements EventService {
 
     private void setViewsAndConfirmedRequest(List<Event> events) {
         log.info("Добавление подтвержденных заявок");
+        //Вроде бы тут сразу группировка без промежуточного списка:
+        // 1-й stream создание списка для самого запроса в БД
+        // 2-й stream сразу же получение результата с группировкой
         Map<Long, Long> countRequestMap = requestRepository.findAllConfirmedRequestsByEventIdIn(
                         events.stream().map(Event::getId).collect(Collectors.toList()))
                 .stream().collect(Collectors.groupingBy(request ->
