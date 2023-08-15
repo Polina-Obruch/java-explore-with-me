@@ -290,7 +290,6 @@ public class EventServiceImpl implements EventService {
         return event;
     }
 
-
     private void updateEvent(Event event, Event eventUpdate) {
         if (event.getState().equals(State.PUBLISHED)) {
             throw new ConflictException("Only pending or canceled events can be changed");
