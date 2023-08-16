@@ -1,0 +1,2732 @@
+{
+	"info": {
+		"_postman_id": "675f73ec-f24b-492c-98c5-b7e4e79a0d4d",
+		"name": "Test - feature_rating",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24192423"
+	},
+	"item": [
+		{
+			"name": "Private Request",
+			"item": [
+				{
+					"name": "Добавление отзыва от пользователя без подтвержденной заявки на участие",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: true,\r",
+									"     feedback: 'Новый отзыв'\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 409 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(409);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление положительного отзыва",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: true,\r",
+									"     feedback: rnd.getWord(4)\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(201);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = JSON.parse(pm.request.body.raw);\r",
+									"const target = pm.response.json();\r",
+									"var query = {};\r",
+									"pm.request.url.query.all().forEach((param) => { query[param.key] = param.value});\r",
+									"\r",
+									"pm.test(\"Отзыв должен содержать поля: id, event, user, isLike, feedback, created\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('event');\r",
+									"pm.expect(target).to.have.property('user');\r",
+									"pm.expect(target).to.have.property('isLike');\r",
+									"pm.expect(target).to.have.property('feedback');\r",
+									"pm.expect(target).to.have.property('created');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.feedback).equal(source.feedback, 'Текст отзыва должен соответствовать тексту в запросе');\r",
+									"    pm.expect(target.isLike.toString()).equal(source.isLike.toString());\r",
+									"    pm.expect(target.created).equal(source.created, 'Дата создания отзыва должна соответствовать дате  в запросе');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Id ивента в запросе и в ответе должны совпадать\", function () {\r",
+									"    pm.expect(target.event.id.toString()).equal(query['eventId'].toString());\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление повторного отзыва",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: false,\r",
+									"     feedback: rnd.getWord(4),\r",
+									"     created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0)\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"\r",
+									"        const submittedReview = await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 409 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(409);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Обновление отзыва",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"\r",
+									"        const review = await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"        pm.collectionVariables.set('rid', review.id);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"   pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify({\r",
+									"            feedback : rnd.getWord(8),\r",
+									"            isLike: false\r",
+									"        }),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(200);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = JSON.parse(pm.request.body.raw);\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Отзыв должен содержать поля: id, event, user, isLike, feedback, created\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('event');\r",
+									"pm.expect(target).to.have.property('user');\r",
+									"pm.expect(target).to.have.property('isLike');\r",
+									"pm.expect(target).to.have.property('feedback');\r",
+									"pm.expect(target).to.have.property('created');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.feedback).equal(source.feedback, 'Текст отзыва должен соответствовать тексту в запросе');\r",
+									"    pm.expect(target.isLike.toString()).equal(source.isLike.toString());\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review/:reviewId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review",
+								":reviewId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								},
+								{
+									"key": "reviewId",
+									"value": "{{rid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Выдача отзыва по reviewId",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"\r",
+									"        const review = await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"        pm.collectionVariables.set('rid', review.id);\r",
+									"        pm.collectionVariables.set(\"response\", review);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(200);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = pm.collectionVariables.get('response');\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Отзыв должен содержать поля: id, event, user, isLike, feedback, created\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('event');\r",
+									"pm.expect(target).to.have.property('user');\r",
+									"pm.expect(target).to.have.property('isLike');\r",
+									"pm.expect(target).to.have.property('feedback');\r",
+									"pm.expect(target).to.have.property('created');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(source.id).equal(target.id, 'Идентификатор отзыва должен соответствовать идентификатору в запросе');\r",
+									"    pm.expect(source.feedback).equal(target.feedback, 'Текст отзыва должен соответствовать тексту в запросе');\r",
+									"    pm.expect(source.isLike.toString()).equal(target.isLike.toString());\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review/:reviewId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review",
+								":reviewId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								},
+								{
+									"key": "reviewId",
+									"value": "{{rid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Удаление отзыва по reviewId",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"\r",
+									"        const review = await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"        pm.collectionVariables.set('rid', review.id);\r",
+									"        pm.collectionVariables.set(\"response\", review)\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 204\", function () {\r",
+									"    pm.response.to.have.status(204);  \r",
+									"});\r",
+									"\r",
+									"source = pm.collectionVariables.get('response');\r",
+									"reviewId = pm.collectionVariables.get('rid');\r",
+									"userId = pm.collectionVariables.get('uid');\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"            url: pm.collectionVariables.get(\"baseUrl\") + \"/users/\" + userId + \"/review/\" + reviewId,\r",
+									"            method: 'GET',\r",
+									"        }, (error, response) => {\r",
+									"            pm.test(\"Отзыв не должен быть найден после удаления\", function () {\r",
+									"                pm.expect(response.code).to.eql(404);\r",
+									"            });\r",
+									"        });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review/:reviewId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review",
+								":reviewId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								},
+								{
+									"key": "reviewId",
+									"value": "{{rid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Выдача отзыва по  несуществующему reviewId",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"\r",
+									"        const review = await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"        pm.collectionVariables.set('rid', 0);\r",
+									"        pm.collectionVariables.set(\"response\", review);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 404 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(404);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review/:reviewId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review",
+								":reviewId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								},
+								{
+									"key": "reviewId",
+									"value": "{{rid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отрицательного отзыва",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: false,\r",
+									"     feedback: rnd.getWord(4)\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(201);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = JSON.parse(pm.request.body.raw);\r",
+									"const target = pm.response.json();\r",
+									"var query = {};\r",
+									"pm.request.url.query.all().forEach((param) => { query[param.key] = param.value});\r",
+									"\r",
+									"pm.test(\"Отзыв должен содержать поля: id, event, user, isLike, feedback, created\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('event');\r",
+									"pm.expect(target).to.have.property('user');\r",
+									"pm.expect(target).to.have.property('isLike');\r",
+									"pm.expect(target).to.have.property('feedback');\r",
+									"pm.expect(target).to.have.property('created');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.feedback).equal(source.feedback, 'Текст отзыва должен соответствовать тексту в запросе');\r",
+									"    pm.expect(target.isLike.toString()).equal(source.isLike.toString());\r",
+									"    pm.expect(target.created).equal(source.created, 'Дата создания отзыва должна соответствовать дате  в запросе');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Id ивента в запросе и в ответе должны совпадать\", function () {\r",
+									"    pm.expect(target.event.id.toString()).equal(query['eventId'].toString());\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва до начала мероприятия",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: true,\r",
+									"     feedback: 'Новый отзыв'\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 1, minuteShift=0, yearShift=0);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 409 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(409);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва без feedback",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: true,\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(201);  \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = JSON.parse(pm.request.body.raw);\r",
+									"const target = pm.response.json();\r",
+									"var query = {};\r",
+									"pm.request.url.query.all().forEach((param) => { query[param.key] = param.value});\r",
+									"\r",
+									"pm.test(\"Отзыв должен содержать поля: id, event, user, isLike, feedback, created\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('event');\r",
+									"pm.expect(target).to.have.property('user');\r",
+									"pm.expect(target).to.have.property('isLike');\r",
+									"pm.expect(target).to.have.property('feedback');\r",
+									"pm.expect(target).to.have.property('created');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.feedback).to.be.null;\r",
+									"    pm.expect(target.isLike.toString()).equal(source.isLike.toString());\r",
+									"    pm.expect(target.created).equal(source.created, 'Дата создания отзыва должна соответствовать дате  в запросе');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Id ивента в запросе и в ответе должны совпадать\", function () {\r",
+									"    pm.expect(target.event.id.toString()).equal(query['eventId'].toString());\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва без eventId",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: true,\r",
+									"     feedback: 'Новый отзыв'\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        \r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"        \r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 400 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва без isLike",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     feedback: 'Новый отзыв'\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"        \r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 400 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва с feedback.length > 200",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: false,\r",
+									"     feedback: rnd.getWord(203)\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"        \r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 400 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва от несуществующего user",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: false,\r",
+									"     feedback: rnd.getWord(5)\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + event.id]);\r",
+									"        pm.collectionVariables.set('uid', 0);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"        \r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 404 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление отзыва для несуществующего event",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    let review = {\r",
+									"     isLike: false,\r",
+									"     feedback: rnd.getWord(5)\r",
+									"    };\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        const requestToParticipate = await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.acceptParticipationRequest(event.id, user.id, requestToParticipate.id);\r",
+									"        pm.request.removeQueryParams(['eventId']);\r",
+									"        pm.request.addQueryParams([`eventId=` + 0]);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"\r",
+									"        review.created = rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0);\r",
+									"        \r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"\r",
+									"    pm.request.body.update({\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(review),\r",
+									"        options: { raw: { language: 'json' } }\r",
+									"    });\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 404 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/review?eventId=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"review"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "0"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Rating",
+			"item": [
+				{
+					"name": "Получение рейтинга пользователей со значением numberTop по умолчанию",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        const category1 = await api.addCategory(rnd.getCategory());\r",
+									"        const category2 = await api.addCategory(rnd.getCategory());\r",
+									"\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        let eventBody1 = rnd.getEvent(category1.id);\r",
+									"        let eventBody2 = rnd.getEvent(category2.id);\r",
+									"\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        eventBody['participantLimit'] = 0\r",
+									"        eventBody1['requestModeration'] = true\r",
+									"        eventBody1['participantLimit'] = 0\r",
+									"        eventBody2['requestModeration'] = true\r",
+									"        eventBody2['participantLimit'] = 0\r",
+									"\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        let event1 = await api.addEvent(user1.id, eventBody1);\r",
+									"        let event2 = await api.addEvent(user2.id, eventBody2);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        event1 = await api.publishEvent(event1.id);\r",
+									"        event2 = await api.publishEvent(event2.id);\r",
+									"\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event1.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser1 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser1.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event1.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser2 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser2.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser2.id);\r",
+									"        \r",
+									"        await api.addReview(submittedUser2.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser2.id, event2.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser3 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser3.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser3.id, event.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('user2', user2);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = pm.collectionVariables.get('user2');\r",
+									"const response = pm.response.json();\r",
+									"const length = response.length;\r",
+									"const target = pm.response.json()[0];\r",
+									"\r",
+									"pm.test(\"Пользователь должен содержать поля: id, name, email, rating\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('name');\r",
+									"pm.expect(target).to.have.property('email');\r",
+									"pm.expect(target).to.have.property('rating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Пользователей должно быть не больше 10\", function () {\r",
+									"pm.expect(length).equal(10);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rating/authors",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rating",
+								"authors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Получение рейтинга пользователей со значением numberTop = 5",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        const category1 = await api.addCategory(rnd.getCategory());\r",
+									"        const category2 = await api.addCategory(rnd.getCategory());\r",
+									"\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        let eventBody1 = rnd.getEvent(category1.id);\r",
+									"        let eventBody2 = rnd.getEvent(category2.id);\r",
+									"\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        eventBody['participantLimit'] = 0\r",
+									"        eventBody1['requestModeration'] = true\r",
+									"        eventBody1['participantLimit'] = 0\r",
+									"        eventBody2['requestModeration'] = true\r",
+									"        eventBody2['participantLimit'] = 0\r",
+									"\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        let event1 = await api.addEvent(user1.id, eventBody1);\r",
+									"        let event2 = await api.addEvent(user2.id, eventBody2);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        event1 = await api.publishEvent(event1.id);\r",
+									"        event2 = await api.publishEvent(event2.id);\r",
+									"\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event1.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser1 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser1.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event1.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser2 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser2.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser2.id);\r",
+									"        \r",
+									"        await api.addReview(submittedUser2.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser2.id, event2.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser3 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser3.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser3.id, event.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('user2', user2);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = pm.collectionVariables.get('user2');\r",
+									"const response = pm.response.json();\r",
+									"const length = response.length;\r",
+									"const target = pm.response.json()[0];\r",
+									"\r",
+									"pm.test(\"Пользователь должен содержать поля: id, name, email, rating\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('name');\r",
+									"pm.expect(target).to.have.property('email');\r",
+									"pm.expect(target).to.have.property('rating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Пользователей должно быть не больше 5\", function () {\r",
+									"pm.expect(length).equal(5);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rating/authors?numberTop=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rating",
+								"authors"
+							],
+							"query": [
+								{
+									"key": "numberTop",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Получение рейтинга событий со значением numberTop по умолчанию",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        const category1 = await api.addCategory(rnd.getCategory());\r",
+									"        const category2 = await api.addCategory(rnd.getCategory());\r",
+									"\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        let eventBody1 = rnd.getEvent(category1.id);\r",
+									"        let eventBody2 = rnd.getEvent(category2.id);\r",
+									"\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        eventBody['participantLimit'] = 0\r",
+									"        eventBody1['requestModeration'] = true\r",
+									"        eventBody1['participantLimit'] = 0\r",
+									"        eventBody2['requestModeration'] = true\r",
+									"        eventBody2['participantLimit'] = 0\r",
+									"\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        let event1 = await api.addEvent(user1.id, eventBody1);\r",
+									"        let event2 = await api.addEvent(user2.id, eventBody2);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        event1 = await api.publishEvent(event1.id);\r",
+									"        event2 = await api.publishEvent(event2.id);\r",
+									"\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event1.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser1 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser1.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event1.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser2 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser2.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser2.id);\r",
+									"        \r",
+									"        await api.addReview(submittedUser2.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser2.id, event2.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser3 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser3.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser3.id, event.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('event', user2);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = pm.collectionVariables.get('event');\r",
+									"const response = pm.response.json();\r",
+									"const length = response.length;\r",
+									"const target = pm.response.json()[0];\r",
+									"\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: id, title, annotation, category, paid, eventDate, initiator, rating\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('title');\r",
+									"pm.expect(target).to.have.property('annotation');\r",
+									"pm.expect(target).to.have.property('category');\r",
+									"pm.expect(target).to.have.property('paid');\r",
+									"pm.expect(target).to.have.property('eventDate');\r",
+									"pm.expect(target).to.have.property('initiator');\r",
+									"pm.expect(target).to.have.property('rating');\r",
+									"pm.expect(target).to.have.property('location');\r",
+									"pm.expect(target).to.have.property('participantLimit');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Событий должно быть не больше 10\", function () {\r",
+									"pm.expect(length).equal(10);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rating/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rating",
+								"events"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Получение рейтинга событий со значением numberTop =5",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        const category1 = await api.addCategory(rnd.getCategory());\r",
+									"        const category2 = await api.addCategory(rnd.getCategory());\r",
+									"\r",
+									"        let eventBody = rnd.getEvent(category.id);\r",
+									"        let eventBody1 = rnd.getEvent(category1.id);\r",
+									"        let eventBody2 = rnd.getEvent(category2.id);\r",
+									"\r",
+									"        eventBody['requestModeration'] = true\r",
+									"        eventBody['participantLimit'] = 0\r",
+									"        eventBody1['requestModeration'] = true\r",
+									"        eventBody1['participantLimit'] = 0\r",
+									"        eventBody2['requestModeration'] = true\r",
+									"        eventBody2['participantLimit'] = 0\r",
+									"\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        let event1 = await api.addEvent(user1.id, eventBody1);\r",
+									"        let event2 = await api.addEvent(user2.id, eventBody2);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        event1 = await api.publishEvent(event1.id);\r",
+									"        event2 = await api.publishEvent(event2.id);\r",
+									"\r",
+									"        const submittedUser = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event1.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser1 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event1.id, submittedUser1.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser1.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event1.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser1.id, event2.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser2 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser2.id);\r",
+									"        await api.publishParticipationRequest(event2.id, submittedUser2.id);\r",
+									"        \r",
+									"        await api.addReview(submittedUser2.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        await api.addReview(submittedUser2.id, event2.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        const submittedUser3 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser3.id);\r",
+									"\r",
+									"        await api.addReview(submittedUser3.id, event.id, {isLike: false, feedback: rnd.getWord(4), \r",
+									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
+									"\r",
+									"        pm.collectionVariables.set('event', user2);\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = pm.collectionVariables.get('event');\r",
+									"const response = pm.response.json();\r",
+									"const length = response.length;\r",
+									"const target = pm.response.json()[0];\r",
+									"\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: id, title, annotation, category, paid, eventDate, initiator, rating\", function () {\r",
+									"pm.expect(target).to.have.property('id');\r",
+									"pm.expect(target).to.have.property('title');\r",
+									"pm.expect(target).to.have.property('annotation');\r",
+									"pm.expect(target).to.have.property('category');\r",
+									"pm.expect(target).to.have.property('paid');\r",
+									"pm.expect(target).to.have.property('eventDate');\r",
+									"pm.expect(target).to.have.property('initiator');\r",
+									"pm.expect(target).to.have.property('rating');\r",
+									"pm.expect(target).to.have.property('location');\r",
+									"pm.expect(target).to.have.property('participantLimit');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Событий должно быть не больше 5\", function () {\r",
+									"pm.expect(length).equal(5);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rating/events?numberTop=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rating",
+								"events"
+							],
+							"query": [
+								{
+									"key": "numberTop",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"API = class {",
+					"    constructor(postman, verbose = false, baseUrl = \"http://localhost:8080\") {",
+					"        this.baseUrl = baseUrl;",
+					"        this.pm = postman;",
+					"        this._verbose = verbose;",
+					"    }",
+					"",
+					"    async addUser(user, verbose=null) {",
+					"        return this.post(\"/admin/users\", user, \"Ошибка при добавлении нового пользователя: \", verbose);",
+					"    }",
+					"",
+					"    async addCategory(category, verbose=null) {",
+					"        return this.post(\"/admin/categories\", category, \"Ошибка при добавлении новой категории: \", verbose);",
+					"    }",
+					"",
+					"    async addEvent(userId, event, verbose=null) {",
+					"        return this.post(\"/users/\" + userId + \"/events\", event, \"Ошибка при добавлении нового события: \", verbose);",
+					"    }",
+					"",
+					"",
+					"     async addReview(userId, eventId, review, verbose=null) {",
+					"        return this.post('/users/' + userId + '/review?eventId=' + eventId, review, \"Ошибка при добавлении отзыва на событие: \", verbose);",
+					"    }",
+					"",
+					"    async addCompilation(compilation, verbose=null) {",
+					"        return this.post(\"/admin/compilations\", compilation, \"Ошибка при добавлении новой подборки: \", verbose);",
+					"    }",
+					"",
+					"    async publishParticipationRequest(eventId, userId, verbose=null) {",
+					"        return this.post('/users/' + userId + '/requests?eventId=' + eventId, null, \"Ошибка при добавлении нового запроса на участие в событии\", verbose);",
+					"    }",
+					"",
+					"    async publishEvent(eventId, verbose=null) {",
+					"        return this.patch('/admin/events/' + eventId, {stateAction: \"PUBLISH_EVENT\"}, \"Ошибка при публикации события\", verbose);",
+					"    }",
+					"    ",
+					"    async rejectEvent(eventId, verbose=null) {",
+					"        return this.patch('/admin/events/' + eventId, {stateAction: \"REJECT_EVENT\"}, \"Ошибка при отмене события\", verbose);",
+					"    }",
+					"",
+					"    async acceptParticipationRequest(eventId, userId, reqId, verbose=null) {",
+					"        return this.patch('/users/' + userId + '/events/' + eventId + '/requests/', {requestIds:[reqId], status: \"CONFIRMED\"}, \"Ошибка при принятии заявки на участие в событии\", verbose);",
+					"    }",
+					"",
+					"    async findCategory(catId, verbose=null) {",
+					"        return this.get('/categories/' + catId, null, \"Ошибка при поиске категории по id\", verbose);",
+					"    }",
+					"",
+					"    async findCompilation(compId, verbose=null) {",
+					"        return this.get('/compilations/' + compId, null, \"Ошибка при поиске подборки по id\", verbose);",
+					"    }",
+					"",
+					"    async findEvent(eventId, verbose=null) {",
+					"        return this.get('/events/' + eventId, null, \"Ошибка при поиске события по id\", verbose);",
+					"    }",
+					"",
+					"    async findUser(userId, verbose=null) {",
+					"        return this.get('/admin/users?ids=' + userId, null, \"Ошибка при поиске пользователя по id\", verbose);",
+					"    }",
+					"",
+					"    async findReview(userId, reviewId, verbose=null) {",
+					"        return this.get('/users/' + userId +'/review/' + reviewId, null, \"Ошибка при поиске отзыва по id\", verbose);",
+					"    }",
+					"",
+					"    async post(path, body, errorText = \"Ошибка при выполнении post-запроса: \", verbose=null) {",
+					"        return this.sendRequest(\"POST\", path, body, errorText, verbose);",
+					"    }",
+					"",
+					"    async patch(path, body = null, errorText = \"Ошибка при выполнении patch-запроса: \", verbose=null) {",
+					"        return this.sendRequest(\"PATCH\", path, body, errorText, verbose);",
+					"    }",
+					"",
+					"    async get(path, body = null, errorText = \"Ошибка при выполнении get-запроса: \", verbose=null) {",
+					"        return this.sendRequest(\"GET\", path, body, errorText, verbose);",
+					"    }",
+					"",
+					"    async sendRequest(method, path, body=null, errorText = \"Ошибка при выполнении запроса: \", verbose=null) {",
+					"        return new Promise((resolve, reject) => {",
+					"            verbose = verbose == null ? this._verbose : verbose;",
+					"",
+					"            const request = {",
+					"                url: this.baseUrl + path,",
+					"                method: method,",
+					"                body: body == null ? \"\" : JSON.stringify(body),",
+					"                header: { \"Content-Type\": \"application/json\" },",
+					"            };",
+					"",
+					"            if(verbose) {",
+					"                console.log(\"Отправляю запрос: \", request);",
+					"            }",
+					"",
+					"            try {",
+					"                this.pm.sendRequest(request, (error, response) => {",
+					"                    if(error || (response.code >= 400 && response.code <= 599)) {",
+					"                        let err = error ? error : JSON.stringify(response.json());",
+					"                        console.error(\"При выполнении запроса к серверу возникла ошика.\\n\", err,",
+					"                             \"\\nДля отладки проблемы повторите такой же запрос к вашей программе \" + ",
+					"                             \"на локальном компьютере. Данные запроса:\\n\", JSON.stringify(request));",
+					"",
+					"                        reject(new Error(errorText + err));",
+					"                    }",
+					"",
+					"                    if(verbose) {",
+					"                        console.log(\"Результат обработки запроса: код состояния - \", response.code, \", тело: \", response.json());",
+					"                    }",
+					"",
+					"                    resolve(response.json());",
+					"                });",
+					"            } catch(err) {",
+					"                if(verbose) {",
+					"                    console.error(errorText, err);",
+					"                }",
+					"                return Promise.reject(err);",
+					"            }",
+					"        });",
+					"    }",
+					"};",
+					"",
+					"RandomUtils = class {",
+					"    constructor() {}",
+					"",
+					"    getUser() {",
+					"        return {",
+					"            name: pm.variables.replaceIn('{{$randomFullName}}'),",
+					"            email: pm.variables.replaceIn('{{$randomEmail}}')",
+					"        };",
+					"    }",
+					"",
+					"    getCategory() {",
+					"        return {",
+					"            name: pm.variables.replaceIn('{{$randomWord}}') + Math.floor(Math.random() * 100).toString()",
+					"        };",
+					"    }",
+					"",
+					"    getEvent(categoryId) {",
+					"        return {",
+					"            annotation: pm.variables.replaceIn('{{$randomLoremParagraph}}'),",
+					"            category: categoryId,",
+					"            description: pm.variables.replaceIn('{{$randomLoremParagraphs}}'),",
+					"            eventDate: this.getFutureDateTime(),",
+					"            location: {",
+					"                lat: parseFloat(pm.variables.replaceIn('{{$randomLatitude}}')),",
+					"                lon: parseFloat(pm.variables.replaceIn('{{$randomLongitude}}')),",
+					"            },",
+					"            paid: pm.variables.replaceIn('{{$randomBoolean}}'),",
+					"            participantLimit: pm.variables.replaceIn('{{$randomInt}}'),",
+					"            requestModeration: pm.variables.replaceIn('{{$randomBoolean}}'),",
+					"            title: pm.variables.replaceIn('{{$randomLoremSentence}}'),",
+					"        }",
+					"    }",
+					"",
+					"    getCompilation(...eventIds) {",
+					"        return {",
+					"            title: pm.variables.replaceIn('{{$randomLoremSentence}}').slice(0, 50),",
+					"            pinned: pm.variables.replaceIn('{{$randomBoolean}}'),",
+					"            events: eventIds",
+					"        };",
+					"    }",
+					"",
+					"",
+					"    getFutureDateTime(hourShift = 5, minuteShift=0, yearShift=0) {",
+					"        let moment = require('moment');",
+					"",
+					"        let m = moment();",
+					"        m.add(hourShift, 'hour');",
+					"        m.add(minuteShift, 'minute');",
+					"        m.add(yearShift, 'year');",
+					"",
+					"        return m.format('YYYY-MM-DD HH:mm:ss');",
+					"    }",
+					"",
+					"    getWord(length = 1) {",
+					"        let result = '';",
+					"        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';",
+					"        const charactersLength = characters.length;",
+					"        let counter = 0;",
+					"        while (counter < length) {",
+					"            result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+					"            counter += 1;",
+					"        }",
+					"        return result;",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "request_body",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "response",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "uid",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "eid",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "reqid",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "rid",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "user2",
+			"value": ""
+		},
+		{
+			"key": "user",
+			"value": ""
+		},
+		{
+			"key": "event",
+			"value": ""
+		}
+	]
+}

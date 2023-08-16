@@ -43,7 +43,7 @@ public class PublicEventController {
                                             @Positive @RequestParam(defaultValue = "10") int size,
                                             HttpServletRequest request) {
         log.info("Запрос на выдачу событий - public");
-        return eventMapper.listEventsToListEventShortSto(eventService.getAllEventsPublic(text, categoryIds, paid,
+        return eventMapper.listEventsToListEventShortDto(eventService.getAllEventsPublic(text, categoryIds, paid,
                 rangeStart, rangeEnd, onlyAvailable, sort, from, size, request));
     }
 }
