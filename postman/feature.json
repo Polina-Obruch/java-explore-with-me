@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "675f73ec-f24b-492c-98c5-b7e4e79a0d4d",
 		"name": "Test - feature_rating",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
 		"_exporter_id": "24192423"
 	},
 	"item": [
@@ -538,9 +538,9 @@
 									"        const review = await api.addReview(submittedUser.id, event.id, {isLike: true, feedback: rnd.getWord(4), \r",
 									"        created: rnd.getFutureDateTime(hourShift = 6, minuteShift=0, yearShift=0) });\r",
 									"\r",
-									"        pm.collectionVariables.set(\"uid\", submittedUser.id);\r",
-									"        pm.collectionVariables.set(\"rid\", review.id);\r",
-									"        pm.collectionVariables.set(\"response\", review);\r",
+									"        pm.collectionVariables.set('uid', submittedUser.id);\r",
+									"        pm.collectionVariables.set('rid', review.id);\r",
+									"        pm.collectionVariables.set('resp', review);\r",
 									"\r",
 									"    } catch(err) {\r",
 									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
@@ -577,7 +577,7 @@
 									"    pm.response.to.be.json;\r",
 									"});\r",
 									"\r",
-									"const source = pm.collectionVariables.get('response');\r",
+									"const source = pm.collectionVariables.get('resp');\r",
 									"const target = pm.response.json();\r",
 									"\r",
 									"pm.test(\"Отзыв должен содержать поля: id, event, user, isLike, feedback, created\", function () {\r",
@@ -590,7 +590,7 @@
 									"});\r",
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-									"    pm.expect(source.id).equal(target.id, 'Идентификатор отзыва должен соответствовать идентификатору в запросе');\r",
+									"    pm.expect(source.id).equal(target.id, 'Идентификатор отзыва должен соответствовать идентификатору отзыва добавленного ранее');\r",
 									"    pm.expect(source.feedback).equal(target.feedback, 'Текст отзыва должен соответствовать тексту в запросе');\r",
 									"    pm.expect(source.isLike.toString()).equal(target.isLike.toString());\r",
 									"});\r",
@@ -600,21 +600,9 @@
 							}
 						}
 					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
 							"raw": "{{baseUrl}}/users/:userId/review/:reviewId",
 							"host": [
@@ -1970,16 +1958,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/rating/authors",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"rating",
-								"authors"
-							]
-						}
+						"url": "{{baseUrl}}/rating/authors"
 					},
 					"response": []
 				},
@@ -2295,16 +2274,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/rating/events",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"rating",
-								"events"
-							]
-						}
+						"url": "{{baseUrl}}/rating/events"
 					},
 					"response": []
 				},
