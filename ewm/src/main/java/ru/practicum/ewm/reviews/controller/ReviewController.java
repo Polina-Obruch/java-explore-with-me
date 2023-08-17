@@ -18,37 +18,37 @@ import javax.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users/{userId}/review")
-public class PrivateReviewController {
+public class ReviewController {
     private final ReviewService reviewService;
     private final ReviewMapper reviewMapper;
 
     @Validated({Marker.OnCreate.class})
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ReviewDto addReview(@PathVariable Long userId,
-                               @RequestParam Long eventId,
-                               @Valid @RequestBody ReviewRequestDto reviewRequestDto) {
+    public ReviewDto addReviewPrivate(@PathVariable Long userId,
+                                      @RequestParam Long eventId,
+                                      @Valid @RequestBody ReviewRequestDto reviewRequestDto) {
         log.info("Запрос на создание отзыва");
         return reviewMapper.toReviewDto(reviewService.addReviewPrivate(userId, eventId, reviewMapper.toReview(reviewRequestDto)));
     }
 
     @PatchMapping(path = "/{reviewId}")
-    public ReviewDto updateReaction(@PathVariable Long userId,
-                                    @PathVariable Long reviewId,
-                                    @Valid @RequestBody ReviewRequestDto reviewRequestDto) {
+    public ReviewDto updateReviewPrivate(@PathVariable Long userId,
+                                         @PathVariable Long reviewId,
+                                         @Valid @RequestBody ReviewRequestDto reviewRequestDto) {
         log.info("Запрос на обновление отзыва");
         return reviewMapper.toReviewDto(reviewService.updateReviewPrivate(userId, reviewId, reviewMapper.toReview(reviewRequestDto)));
     }
 
     @GetMapping(path = "/{reviewId}")
-    public ReviewDto getReview(@PathVariable Long userId, @PathVariable Long reviewId) {
+    public ReviewDto getReviewPublic(@PathVariable Long userId, @PathVariable Long reviewId) {
         log.info("Запрос на выдачу отзыва");
-        return reviewMapper.toReviewDto(reviewService.getReviewPrivate(userId, reviewId));
+        return reviewMapper.toReviewDto(reviewService.getReviewPublic(userId, reviewId));
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(path = "/{reviewId}")
-    public void removeReview(@PathVariable Long userId, @PathVariable Long reviewId) {
+    public void removeReviewPrivate(@PathVariable Long userId, @PathVariable Long reviewId) {
         log.info("Запрос на удаление отзыва");
         reviewService.removeReviewPrivate(userId, reviewId);
     }

@@ -7,7 +7,7 @@ public interface ReviewService {
 
     Review updateReviewPrivate(Long userId, Long reviewId, Review updateReview);
 
-    Review getReviewPrivate(Long userId, Long reviewId);
+    Review getReviewPublic(Long userId, Long reviewId);
 
     void removeReviewPrivate(Long userId, Long reviewId);
 }

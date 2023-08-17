@@ -34,7 +34,6 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Review addReviewPrivate(Long userId, Long eventId, Review review) {
         log.info("Добавление отзыва - private");
-        User user = getUser(userId);
         Event event = getEvent(eventId);
 
         if (Objects.equals(event.getInitiator().getId(), userId)) {
@@ -56,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ConflictException("Can't add review before start event");
         }
 
-        review.setUser(user);
+        review.setUser(getUser(userId));
         review.setEvent(event);
         return reviewRepository.save(review);
     }
@@ -65,6 +64,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Review updateReviewPrivate(Long userId, Long reviewId, Review updateReview) {
         log.info(String.format("Обновление отзыва c id = %d - private", reviewId));
+        checkIfUserExists(userId);
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new EntityNotFoundException("Review", reviewId));
 
@@ -79,10 +79,12 @@ public class ReviewServiceImpl implements ReviewService {
         return review;
     }
 
+    //Получить отзыв может любой пользователь
     @Override
-    public Review getReviewPrivate(Long userId, Long reviewId) {
+    public Review getReviewPublic(Long userId, Long reviewId) {
         log.info(String.format("Выдача отзыва c id = %d - private", reviewId));
-        getUser(userId);
+        checkIfUserExists(userId);
+
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new EntityNotFoundException("Review", reviewId));
     }
@@ -91,7 +93,14 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void removeReviewPrivate(Long userId, Long reviewId) {
         log.info(String.format("Удаление отзыва c id = %d - private", reviewId));
+        checkIfUserExists(userId);
         reviewRepository.deleteById(reviewId);
+    }
+
+    private void checkIfUserExists(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new EntityNotFoundException("User", userId);
+        }
     }
 
     private User getUser(Long userId) {
