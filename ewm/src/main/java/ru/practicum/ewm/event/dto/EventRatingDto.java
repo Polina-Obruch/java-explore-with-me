@@ -8,13 +8,14 @@ import lombok.Setter;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventShortDto {
+@Getter
+@Setter
+public class EventRatingDto {
     private Long id;
 
     private String annotation;
@@ -26,11 +27,13 @@ public class EventShortDto {
 
     private UserShortDto initiator;
 
+    private LocationDto location;
+
     private boolean paid;
+
+    private Integer participantLimit;
 
     private String title;
 
-    private Long confirmedRequests;
-
-    private Long views;
+    private BigDecimal rating;
 }

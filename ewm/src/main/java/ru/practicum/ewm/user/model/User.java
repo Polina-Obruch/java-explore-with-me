@@ -3,6 +3,7 @@ package ru.practicum.ewm.user.model;
 import lombok.*;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -21,4 +22,7 @@ public class User {
 
     @Column(unique = true)
     private String email;
+
+    @Transient
+    private BigDecimal rating;
 }

@@ -58,7 +58,7 @@ public class PrivateEventController {
                                             @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                             @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Запрос на выдачу списка событий - private");
-        return eventMapper.listEventsToListEventShortSto(eventService.getAllEventsPrivate(userId, PaginationUtils.toPage(from, size)));
+        return eventMapper.listEventsToListEventShortDto(eventService.getAllEventsPrivate(userId, PaginationUtils.toPage(from, size)));
     }
 
     @PatchMapping("/{eventId}/requests")
