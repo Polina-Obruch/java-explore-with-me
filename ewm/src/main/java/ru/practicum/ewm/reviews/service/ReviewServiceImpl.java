@@ -34,6 +34,10 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Review addReviewPrivate(Long userId, Long eventId, Review review) {
         log.info("Добавление отзыва - private");
+
+        //Проверка на существования пользователя нужна здесь для ошибки 404.
+        // Т.к. иначе при несуществующем пользователе не будет находиться request, а это уже 409 ошибка
+        User user = getUser(userId);
         Event event = getEvent(eventId);
 
         if (Objects.equals(event.getInitiator().getId(), userId)) {
@@ -55,7 +59,7 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ConflictException("Can't add review before start event");
         }
 
-        review.setUser(getUser(userId));
+        review.setUser(user);
         review.setEvent(event);
         return reviewRepository.save(review);
     }
